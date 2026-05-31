@@ -4,7 +4,9 @@
 reporter: xcode
 
 included:
-  - notchActions
+  - notchTelePrompt
+  - notchTelePromptTests
+  - notchTelePromptUITests
 
 # Paths to exclude from linting, e.g. your dependencies.
 excluded:
@@ -131,7 +133,6 @@ opt_in_rules:
   - unused_closure_parameter
   - unused_optional_binding
   - static_operator
-  - todo
   - private_outlet
   - modifier_order
   - closure_body_length
@@ -145,6 +146,18 @@ opt_in_rules:
   - private_over_fileprivate
   - redundant_string_enum_value
   - vertical_whitespace_closing_braces
+
+# project comment convention: comments are lowercase; only TODO and MARK are uppercase.
+custom_rules:
+  lowercase_comment:
+    name: "Lowercase Comment"
+    # match `//` line comments that start with an uppercase letter,
+    # excluding tooling directives and the allowed TODO / MARK / FIXME markers.
+    regex: '//[ \t]*(?!swiftlint:|periphery:|sourcery:|MARK|TODO|FIXME|Created|Copyright|notchTelePrompt|[A-Za-z0-9_]+\.swift)[A-Z]'
+    match_kinds:
+      - comment
+    message: "comments should start with a lowercase letter (only TODO and MARK stay uppercase)"
+    severity: warning
 
 # There will be an error if there are more than 5 warnings
 warning_threshold: 390
@@ -224,6 +237,8 @@ syntactic_sugar:
 
 # disabled rules.
 disabled_rules:
+  # todos are embraced while the project is in active development.
+  - todo
   - conditional_returns_on_newline
   - cyclomatic_complexity
   - discouraged_object_literal

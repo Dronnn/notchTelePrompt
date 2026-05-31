@@ -1,10 +1,10 @@
 # https://github.com/nicklockwood/SwiftFormat
 
-# file header foramat
---header "\n {file}\n notchActions\n\n Created by Andreas Maier.\n Copyright © {year} Andreas Maier. All rights reserved.\n"
+# file header format
+--header "\n {file}\n notchTelePrompt\n\n Created by Andreas Maier.\n Copyright © {year} Andreas Maier. All rights reserved.\n"
 
 # options
---swiftversion 5
+--swiftversion 6
 --indent 4
 --decimalgrouping 3,3
 --hexgrouping 4,8

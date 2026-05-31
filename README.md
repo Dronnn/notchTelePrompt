@@ -32,6 +32,14 @@ Built for people who speak on camera: video recordings, online meetings, screen 
 
 In active development toward a 1.0 Mac App Store release.
 
+Implemented so far:
+
+- **Foundations** — sandboxed menu-bar app (no Dock icon), Swift 6 strict concurrency, SwiftLint/SwiftFormat pipeline.
+- **Local persistence** — SwiftData model and script store: create, edit, search, sort, duplicate, favorite, and recent ordering.
+- **Editor & library** — split-view window with a plain-text editor (live word/character count and reading-time estimate, debounced autosave) and a searchable, sortable library with favorites, duplicate/rename/delete, and a first-launch welcome.
+
+Next up: import/export (`.txt` / `.md`), clipboard and drag-and-drop, then the notch overlay window.
+
 ## License
 
 MIT © Andreas Maier — see [LICENSE](LICENSE).
