@@ -9,22 +9,31 @@
 import AppKit
 
 /// owns the menu bar status item and its menu.
-/// actions are stubs for now; real behavior is wired in later phases (editor, prompter, voice).
+/// menu actions forward to closures set by the app delegate (new/import/paste/export, show/snap
+/// prompter, library); preferences is wired in phase 10.
 @MainActor
-final class MenuBarController {
+final class MenuBarController: NSObject {
     weak var windowController: MainWindowController?
     var onNewScript: (() -> Void)?
     var onImportScript: (() -> Void)?
     var onPasteClipboard: (() -> Void)?
     var onExportScript: (() -> Void)?
     var onShowPrompter: (() -> Void)?
+    var onSnapToNotch: (() -> Void)?
+    /// reports the prompter's current visibility so the menu can show the right Show / Hide title.
+    var isPrompterVisible: (() -> Bool)?
 
     private let statusItem: NSStatusItem
+    /// kept so the title can be flipped between "Show Prompter" and "Hide Prompter" as the menu opens.
+    private var showPrompterItem: NSMenuItem?
 
-    init() {
+    override init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        super.init()
         configureButton()
-        statusItem.menu = makeMenu()
+        let menu = makeMenu()
+        menu.delegate = self
+        statusItem.menu = menu
     }
 
     // MARK: - Setup
@@ -64,7 +73,10 @@ final class MenuBarController {
         ))
         menu.addItem(.separator())
         menu.addItem(menuItem(title: String(localized: "Show Library"), action: #selector(showLibrary)))
-        menu.addItem(menuItem(title: String(localized: "Show Prompter"), action: #selector(showPrompter)))
+        let showPrompterItem = menuItem(title: String(localized: "Show Prompter"), action: #selector(showPrompter))
+        self.showPrompterItem = showPrompterItem
+        menu.addItem(showPrompterItem)
+        menu.addItem(menuItem(title: String(localized: "Snap Prompter to Notch"), action: #selector(snapToNotch)))
         menu.addItem(.separator())
         menu.addItem(menuItem(title: String(localized: "Preferences…"), action: #selector(openPreferences)))
         menu.addItem(.separator())
@@ -118,6 +130,11 @@ final class MenuBarController {
         onShowPrompter?()
     }
 
+    @objc
+    private func snapToNotch() {
+        onSnapToNotch?()
+    }
+
     // TODO: wire to the preferences window in phase 10.
     @objc
     private func openPreferences() {}
@@ -125,5 +142,17 @@ final class MenuBarController {
     @objc
     private func quit() {
         NSApplication.shared.terminate(nil)
+    }
+}
+
+// MARK: - NSMenuDelegate
+
+extension MenuBarController: NSMenuDelegate {
+    /// flips the prompter item title to reflect whether the overlay is currently visible.
+    func menuNeedsUpdate(_: NSMenu) {
+        let visible = isPrompterVisible?() ?? false
+        showPrompterItem?.title = visible
+            ? String(localized: "Hide Prompter")
+            : String(localized: "Show Prompter")
     }
 }

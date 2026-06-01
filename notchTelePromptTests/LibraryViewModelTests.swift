@@ -66,6 +66,18 @@ struct LibraryViewModelTests {
         #expect(!viewModel.scripts.contains { $0.id == other.id })
     }
 
+    @Test
+    func deleteNotifiesObserverWithDeletedID() throws {
+        let store = try makeStore()
+        let viewModel = LibraryViewModel(store: store)
+        let script = try viewModel.newScript()
+        let deletedID = script.id
+        var notifiedID: UUID?
+        viewModel.onScriptDeleted = { notifiedID = $0 }
+        try viewModel.delete(script)
+        #expect(notifiedID == deletedID)
+    }
+
     // MARK: - Duplicate
 
     @Test

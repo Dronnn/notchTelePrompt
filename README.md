@@ -38,9 +38,9 @@ Implemented so far:
 - **Local persistence** — SwiftData model and script store: create, edit, search, sort, duplicate, favorite, and recent ordering.
 - **Editor & library** — split-view window with a plain-text editor (live word/character count and reading-time estimate, debounced autosave) and a searchable, sortable library with favorites, duplicate/rename/delete, and a first-launch welcome.
 - **Import / export** — import `.txt` / `.md` files, paste the clipboard as a new script (auto-titled), drag a file onto the editor, and export the current script — all UTF-8 with line breaks preserved.
-- **Prompter overlay** — a borderless, non-activating floating panel that hosts the script above other apps without stealing focus, and asks macOS to keep itself out of screen captures (best-effort; not guaranteed — see the in-app note). Launch it from the editor's Start Prompter button or the menu-bar Show Prompter item.
+- **Prompter overlay** — a borderless, non-activating panel that floats the script around the camera (centered below the notch) on the built-in display, above other apps and without stealing focus. Drag it anywhere and snap it back to the notch; close and reopen it from on-screen controls or the menu bar. It asks macOS to stay out of screen captures (best-effort; not guaranteed — see the in-app note). Launch it from the editor's Start Prompter button or the menu-bar Show Prompter item.
 
-Next up: notch-aware positioning — placing the overlay around the camera on the built-in display, with drag-anywhere and a snap-to-notch control.
+Next up: rich prompter rendering — readable typography, current-line highlighting, and smooth scrolling.
 
 ## License
 

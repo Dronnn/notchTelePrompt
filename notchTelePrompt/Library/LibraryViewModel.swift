@@ -26,6 +26,10 @@ final class LibraryViewModel {
     var selectedScript: Script?
     var errorMessage: String?
 
+    /// notified with a script's id immediately after it is deleted, so observers (e.g. the prompter)
+    /// can drop any reference to it.
+    var onScriptDeleted: ((UUID) -> Void)?
+
     private let store: ScriptStore
 
     init(store: ScriptStore) {
@@ -58,11 +62,13 @@ final class LibraryViewModel {
     }
 
     func delete(_ script: Script) throws {
-        if selectedScript?.id == script.id {
+        let deletedID = script.id
+        if selectedScript?.id == deletedID {
             selectedScript = nil
         }
         try store.delete(script)
         refresh()
+        onScriptDeleted?(deletedID)
     }
 
     @discardableResult

@@ -18,29 +18,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var mainWindowController: MainWindowController?
     private var importExportViewModel: ImportExportViewModel?
     private var prompterController: PrompterWindowController?
+    private var libraryViewModel: LibraryViewModel?
 
     func applicationDidFinishLaunching(_: Notification) {
-        let libraryViewModel = LibraryViewModel(store: environment.scriptStore)
-        let importExportVM = ImportExportViewModel(store: environment.scriptStore, libraryViewModel: libraryViewModel)
+        let library = LibraryViewModel(store: environment.scriptStore)
+        libraryViewModel = library
+        let importExportVM = ImportExportViewModel(store: environment.scriptStore, libraryViewModel: library)
         importExportViewModel = importExportVM
 
         let windowController = MainWindowController(
             environment: environment,
-            libraryViewModel: libraryViewModel,
+            libraryViewModel: library,
             importExportViewModel: importExportVM
         )
         mainWindowController = windowController
+        windowController.onStartPrompter = { [weak self] script in self?.showPrompter(script) }
 
-        let prompter = PrompterWindowController()
-        prompterController = prompter
-        windowController.onStartPrompter = { [weak prompter] script in prompter?.show(script: script) }
+        prompterController = PrompterWindowController()
+        library.onScriptDeleted = { [weak self] id in self?.prompterController?.forgetScript(id) }
+        menuBarController = makeMenuBarController(windowController: windowController, importExportVM: importExportVM)
+    }
 
+    // MARK: - Menu Bar
+
+    private func makeMenuBarController(
+        windowController: MainWindowController,
+        importExportVM: ImportExportViewModel
+    ) -> MenuBarController {
         let menuBar = MenuBarController()
         menuBar.windowController = windowController
         menuBar.onNewScript = { [weak windowController] in windowController?.open() }
-        menuBar.onShowPrompter = { [weak prompter, weak environment = self.environment] in
-            prompter?.toggle(script: environment?.scriptStore.mostRecentScript)
-        }
+        menuBar.onShowPrompter = { [weak self] in self?.togglePrompter() }
+        menuBar.onSnapToNotch = { [weak self] in self?.prompterController?.snap() }
+        menuBar.isPrompterVisible = { [weak self] in self?.prompterController?.isVisible ?? false }
         menuBar.onImportScript = { [weak windowController, weak importExportVM] in
             windowController?.open()
             Task { await importExportVM?.importScript() }
@@ -52,6 +62,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.onExportScript = { [weak importExportVM] in
             Task { await importExportVM?.exportSelectedScript() }
         }
-        menuBarController = menuBar
+        return menuBar
+    }
+
+    // MARK: - Prompter
+
+    /// shows the prompter for a definite script, marking it used and refreshing the library's recents.
+    private func showPrompter(_ script: Script) {
+        // markUsed is best-effort recency bookkeeping; failing it must not block starting the prompter.
+        try? environment.scriptStore.markUsed(script)
+        libraryViewModel?.refresh()
+        prompterController?.show(script: script)
+    }
+
+    /// menu-bar toggle: hide if visible; else reopen the last script, then the selection, then the most
+    /// recent; open the library only when there is nothing to show.
+    private func togglePrompter() {
+        guard let prompter = prompterController else {
+            return
+        }
+        if prompter.isVisible {
+            prompter.hide()
+            return
+        }
+        let script = prompter.lastScript
+            ?? libraryViewModel?.selectedScript
+            ?? environment.scriptStore.mostRecentScript
+        if let script {
+            showPrompter(script)
+        } else {
+            mainWindowController?.open()
+        }
     }
 }
