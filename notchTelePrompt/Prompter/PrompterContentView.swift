@@ -20,6 +20,11 @@ struct PrompterContentView: View {
     var body: some View {
         PrompterBodyView(viewModel: viewModel)
             .background(.black.opacity(0.82))
+            .overlay {
+                if viewModel.scrollEngine.state == .countdown {
+                    PrompterCountdownOverlay(secondsRemaining: viewModel.scrollEngine.countdownRemaining)
+                }
+            }
             .overlay(alignment: .bottom) {
                 PrompterProgressBar(progress: viewModel.progress)
             }
@@ -29,7 +34,10 @@ struct PrompterContentView: View {
                     .animation(.easeInOut(duration: 0.15), value: isHovering)
             }
             .clipShape(.rect(cornerRadius: 8))
-            .onHover { isHovering = $0 }
+            .onHover { hovering in
+                isHovering = hovering
+                viewModel.setHovering(hovering)
+            }
     }
 }
 
@@ -55,8 +63,24 @@ private struct PrompterControlsView: View {
     let onClose: () -> Void
     let onSnap: () -> Void
 
+    private var isPlaying: Bool {
+        viewModel.scrollEngine.state == .playing
+    }
+
     var body: some View {
         HStack {
+            Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
+                viewModel.togglePlayPause()
+            }
+            Button("Restart", systemImage: "arrow.counterclockwise") {
+                viewModel.restart()
+            }
+            Button("Slower", systemImage: "tortoise") {
+                viewModel.decreaseSpeed()
+            }
+            Button("Faster", systemImage: "hare") {
+                viewModel.increaseSpeed()
+            }
             Button("Smaller text", systemImage: "textformat.size.smaller") {
                 viewModel.decreaseFontSize()
             }

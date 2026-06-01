@@ -8,34 +8,50 @@
 
 import Foundation
 
-/// holds the state the prompter overlay renders.
-/// phase 7 drives currentLineIndex during playback; phase 6 just renders at it.
+/// holds the state the prompter overlay renders. owns the scroll engine that drives playback;
+/// the current reading line is derived from the engine's scroll offset (phase 7).
 @MainActor
 @Observable
 final class PrompterViewModel {
-    /// the script being shown. setting it resets the reading position to the top
-    /// and refreshes the font size mirror from the script's stored settings.
+    /// the scroll engine driving auto-scroll, offset and the playback state machine.
+    let scrollEngine = ScrollEngine()
+
+    /// the chosen pre-start countdown (spec §17); applied on start / restart.
+    var countdown: CountdownOption = .three
+
+    /// the script being shown. setting it resets the engine to the top and refreshes the font size
+    /// mirror from the script's stored settings.
     var currentScript: Script? {
         didSet {
-            currentLineIndex = 0
+            scrollEngine.stop()
             reloadFontSize()
-        }
-    }
-
-    /// the current reading line, clamped to the valid range of lines.
-    var currentLineIndex = 0 {
-        didSet {
-            let upperBound = max(lines.count - 1, 0)
-            let clamped = min(max(currentLineIndex, 0), upperBound)
-            if clamped != currentLineIndex {
-                currentLineIndex = clamped
-            }
+            syncEngineGeometry()
         }
     }
 
     /// the per-script prompter font size in points, mirrored from the current script's settings
     /// (falling back to the default). the view layer binds to this instead of reading the @Model.
     private(set) var fontSize = PrompterFontSize.default
+
+    /// the current reading line, derived from the engine's scroll offset and the line geometry.
+    var currentLineIndex: Int {
+        PrompterLayoutMetrics.lineIndex(
+            forOffset: scrollEngine.offset,
+            lineCount: lines.count,
+            fontSize: fontSize,
+            lineSpacing: lineSpacing
+        )
+    }
+
+    /// reading progress in [0, 1], taken from the engine's scroll position.
+    var progress: Double {
+        scrollEngine.progress
+    }
+
+    /// vertical spacing between rendered lines (fixed default for v1.0).
+    var lineSpacing: Double {
+        Double(PrompterStyle.lineSpacing)
+    }
 
     /// the script text split into renderable lines. memoized so it resplits only when the text
     /// actually changes (not every render or scroll tick), while still reflecting live edits.
@@ -58,11 +74,51 @@ final class PrompterViewModel {
     init(store: ScriptStore? = nil) {
         self.store = store
         observeFontSizeChanges()
+        syncEngineGeometry()
+        scrollEngine.setSpeed(.default(fontSize: fontSize, lineSpacing: lineSpacing))
     }
 
-    /// reading progress in [0, 1] for the current line within the script.
-    var progress: Double {
-        PrompterLineEmphasis.progress(currentIndex: currentLineIndex, lineCount: lines.count)
+    // MARK: - Playback
+
+    func togglePlayPause() {
+        scrollEngine.togglePlayPause()
+    }
+
+    func restart() {
+        scrollEngine.restart(countdown: countdown)
+    }
+
+    func setHovering(_ hovering: Bool) {
+        scrollEngine.setHovering(hovering)
+    }
+
+    /// the viewport height measured by the view; feeds the engine so max offset / progress are right.
+    func setViewportHeight(_ height: Double) {
+        scrollEngine.viewportHeight = height
+    }
+
+    // MARK: - Speed
+
+    /// current speed expressed in words-per-minute for the active geometry.
+    var wordsPerMinute: Double {
+        ScrollSpeed(pointsPerSecond: scrollEngine.pointsPerSecond)
+            .wordsPerMinute(fontSize: fontSize, lineSpacing: lineSpacing)
+    }
+
+    func increaseSpeed() {
+        applyWordsPerMinute(wordsPerMinute + Self.wpmStep)
+    }
+
+    func decreaseSpeed() {
+        applyWordsPerMinute(wordsPerMinute - Self.wpmStep)
+    }
+
+    private static let wpmStep = 10.0
+
+    private func applyWordsPerMinute(_ wpm: Double) {
+        let speed = ScrollSpeed(wordsPerMinute: wpm, fontSize: fontSize, lineSpacing: lineSpacing)
+            .clamped(fontSize: fontSize, lineSpacing: lineSpacing)
+        scrollEngine.setSpeed(speed)
     }
 
     // MARK: - Font size
@@ -85,6 +141,7 @@ final class PrompterViewModel {
             return
         }
         fontSize = clamped
+        syncEngineGeometry()
         try? store?.setFontSize(clamped, on: script)
         NotificationCenter.default.post(
             name: .scriptFontSizeDidChange,
@@ -96,6 +153,21 @@ final class PrompterViewModel {
     /// refreshes the mirror from the current script's stored settings, defaulting when none exist.
     private func reloadFontSize() {
         fontSize = PrompterFontSize.clamp(currentScript?.settingsBlob?.fontSize ?? PrompterFontSize.default)
+        syncEngineGeometry()
+    }
+
+    /// keeps the engine's geometry inputs (font size, line spacing, content height) in step so its
+    /// offset math, max offset and progress stay correct. content height is computed, not measured.
+    /// called from explicit mutation points (script / font changes) and from the view when the line
+    /// count changes, never from inside a view body, so it can safely mutate the observable engine.
+    func syncEngineGeometry() {
+        scrollEngine.fontSize = fontSize
+        scrollEngine.lineSpacing = lineSpacing
+        scrollEngine.contentHeight = PrompterLayoutMetrics.contentHeight(
+            lineCount: lines.count,
+            fontSize: fontSize,
+            lineSpacing: lineSpacing
+        )
     }
 
     /// re-reads the size when another surface (the editor) changes it for the script we are showing.

@@ -44,7 +44,9 @@ Implemented so far:
 
 - **Prompt sets & session navigator** — group prompts into reusable, ordered sets and run a session from a small floating navigator docked to the left, listing the set's prompts by number; click one to show it in the prompter, step next/previous, and reorder by dragging. Build and edit sets from a dedicated Sets section in the main window; reordering stays in sync across both.
 
-Next up: the scroll engine — countdown, fixed-speed auto-scroll, pause/resume, and hover-to-pause.
+- **Scroll engine & playback** — drift-free, time-based auto-scroll at an adjustable speed, with a pre-roll countdown, play/pause, restart, hover-to-pause, and manual wheel/trackpad scrolling — all from the overlay's hover controls.
+
+Next up: menu-bar controls and rebindable global hotkeys.
 
 ## License
 
