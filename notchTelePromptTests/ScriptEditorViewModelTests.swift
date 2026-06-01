@@ -140,35 +140,43 @@ struct ScriptEditorViewModelTests {
 
     // MARK: - Font size
 
+    /// builds an editor view model wired to an isolated PreferencesStore so font-size cases (which now
+    /// read/write the single global default) stay isolated from each other and from .standard defaults.
+    private func makeViewModel(store: ScriptStore) throws -> (ScriptEditorViewModel, PreferencesStore) {
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let preferences = PreferencesStore(defaults: defaults)
+        return (ScriptEditorViewModel(store: store, preferences: preferences), preferences)
+    }
+
     @Test
-    func fontSizeDefaultsWhenScriptHasNoSettings() throws {
+    func fontSizeReadsGlobalDefault() throws {
         let store = try makeStore()
         let script = try store.create(title: "Plain")
-        let viewModel = ScriptEditorViewModel(store: store)
+        let (viewModel, _) = try makeViewModel(store: store)
         viewModel.selectedScript = script
         #expect(viewModel.fontSize == PrompterFontSize.default)
     }
 
     @Test
-    func increaseAndDecreaseFontSizePersistThroughStore() throws {
+    func increaseAndDecreaseFontSizeWritesGlobalDefault() throws {
         let store = try makeStore()
         let script = try store.create(title: "Sized")
-        let viewModel = ScriptEditorViewModel(store: store)
+        let (viewModel, preferences) = try makeViewModel(store: store)
         viewModel.selectedScript = script
         viewModel.increaseFontSize()
         #expect(viewModel.fontSize == PrompterFontSize.default + PrompterFontSize.step)
-        #expect(script.settingsBlob?.fontSize == PrompterFontSize.default + PrompterFontSize.step)
+        #expect(preferences.prompterDefaults.fontSize == PrompterFontSize.default + PrompterFontSize.step)
         viewModel.decreaseFontSize()
         #expect(viewModel.fontSize == PrompterFontSize.default)
-        #expect(script.settingsBlob?.fontSize == PrompterFontSize.default)
+        #expect(preferences.prompterDefaults.fontSize == PrompterFontSize.default)
     }
 
     @Test
-    func fontSizeMirrorReloadsFromSelectedScript() throws {
+    func fontSizeMirrorReadsGlobalDefault() throws {
         let store = try makeStore()
         let script = try store.create(title: "Sized")
-        try store.setFontSize(60, on: script)
-        let viewModel = ScriptEditorViewModel(store: store)
+        let (viewModel, preferences) = try makeViewModel(store: store)
+        preferences.prompterDefaults.fontSize = 60
         viewModel.selectedScript = script
         #expect(viewModel.fontSize == 60)
     }
@@ -177,16 +185,12 @@ struct ScriptEditorViewModelTests {
     func fontSizeBoundsDisableFlags() throws {
         let store = try makeStore()
         let script = try store.create(title: "Sized")
-        let viewModel = ScriptEditorViewModel(store: store)
+        let (viewModel, preferences) = try makeViewModel(store: store)
         viewModel.selectedScript = script
-        try store.setFontSize(PrompterFontSize.max, on: script)
-        viewModel.selectedScript = nil
-        viewModel.selectedScript = script
+        preferences.prompterDefaults.fontSize = PrompterFontSize.max
         #expect(viewModel.canIncreaseFontSize == false)
         #expect(viewModel.canDecreaseFontSize == true)
-        try store.setFontSize(PrompterFontSize.min, on: script)
-        viewModel.selectedScript = nil
-        viewModel.selectedScript = script
+        preferences.prompterDefaults.fontSize = PrompterFontSize.min
         #expect(viewModel.canDecreaseFontSize == false)
         #expect(viewModel.canIncreaseFontSize == true)
     }

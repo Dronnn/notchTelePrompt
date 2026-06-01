@@ -124,29 +124,6 @@ struct ScriptStoreTests {
         #expect(titles == ["alpha", "Bravo", "Charlie"])
     }
 
-    // MARK: - Font size
-
-    @Test
-    func setFontSizeCreatesBlobWhenAbsentAndClamps() throws {
-        let store = try makeStore()
-        let script = try store.create(title: "Sized")
-        #expect(script.settingsBlob == nil)
-        try store.setFontSize(40, on: script)
-        #expect(script.settingsBlob?.fontSize == 40)
-        // out-of-range values are clamped to the allowed maximum.
-        try store.setFontSize(PrompterFontSize.max + 100, on: script)
-        #expect(script.settingsBlob?.fontSize == PrompterFontSize.max)
-    }
-
-    @Test
-    func setFontSizeDoesNotTouchUpdatedAt() throws {
-        let store = try makeStore()
-        let script = try store.create(title: "Sized")
-        let originalUpdatedAt = script.updatedAt
-        try store.setFontSize(40, on: script)
-        #expect(script.updatedAt == originalUpdatedAt)
-    }
-
     // MARK: - Favorite
 
     @Test

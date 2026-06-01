@@ -11,11 +11,11 @@ import SwiftUI
 
 /// owns the optional floating mini control panel and its hosted SwiftUI content.
 /// shows and hides the panel without ever taking focus, docks it near the bottom of the camera
-/// screen, and forwards the hide-prompter action to the host via onHidePrompter.
+/// screen, and forwards the show/hide-prompter toggle to the host via onTogglePrompter.
 @MainActor
 final class PrompterControlPanelController: NSObject {
-    /// the control row's fixed size; wide enough for the six icon buttons in a single line.
-    private static let panelSize = CGSize(width: 304, height: 48)
+    /// the control row's fixed size; wide enough for the eight icon buttons in a single line.
+    private static let panelSize = CGSize(width: 400, height: 48)
 
     /// gap between the panel's bottom edge and the visible frame's bottom edge.
     private static let bottomMargin: CGFloat = 24
@@ -23,8 +23,8 @@ final class PrompterControlPanelController: NSObject {
     private let panel: PrompterControlPanel
     private let viewModel: PrompterViewModel
 
-    /// forwards the user's request to hide the prompter overlay from the control panel.
-    var onHidePrompter: (() -> Void)?
+    /// forwards the user's request to show or hide the prompter overlay from the control panel.
+    var onTogglePrompter: (() -> Void)?
 
     var isVisible: Bool {
         panel.isVisible
@@ -45,9 +45,9 @@ final class PrompterControlPanelController: NSObject {
 
         super.init()
 
-        // rebuild the content with the hide action wired now that self is fully initialized.
+        // rebuild the content with the toggle action wired now that self is fully initialized.
         hostingView.rootView = PrompterControlPanelView(viewModel: viewModel) { [weak self] in
-            self?.onHidePrompter?()
+            self?.onTogglePrompter?()
         }
     }
 

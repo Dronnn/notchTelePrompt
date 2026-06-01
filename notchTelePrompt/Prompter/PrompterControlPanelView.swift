@@ -12,7 +12,7 @@ import SwiftUI
 /// on a translucent dark rounded background, mirroring the prompter overlay's control styling.
 struct PrompterControlPanelView: View {
     let viewModel: PrompterViewModel
-    let onHidePrompter: () -> Void
+    let onTogglePrompter: () -> Void
 
     private var isPlaying: Bool {
         viewModel.scrollEngine.state == .playing
@@ -47,13 +47,25 @@ struct PrompterControlPanelView: View {
                 viewModel.increaseSpeed()
             }
             .disabled(!hasScript)
+            Button("Smaller text", systemImage: "textformat.size.smaller") {
+                viewModel.decreaseFontSize()
+            }
+            .disabled(viewModel.fontSize <= PrompterFontSize.min)
+            Button("Larger text", systemImage: "textformat.size.larger") {
+                viewModel.increaseFontSize()
+            }
+            .disabled(viewModel.fontSize >= PrompterFontSize.max)
             Button(
                 viewModel.isVoiceModeEnabled ? "Voice on" : "Voice off",
                 systemImage: voiceSymbol
             ) {
                 viewModel.toggleVoiceMode()
             }
-            Button("Hide Prompter", systemImage: "eye.slash", action: onHidePrompter)
+            Button(
+                viewModel.isOverlayVisible ? "Hide Prompter" : "Show Prompter",
+                systemImage: viewModel.isOverlayVisible ? "eye.slash" : "eye",
+                action: onTogglePrompter
+            )
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.plain)

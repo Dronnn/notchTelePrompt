@@ -87,15 +87,6 @@ final class ScriptStore {
         try modelContext.save()
     }
 
-    /// persists a per-script prompter font size into settingsBlob, creating a default blob when absent.
-    /// does not touch updatedAt: an appearance tweak should not reorder the library.
-    func setFontSize(_ fontSize: Double, on script: Script) throws {
-        var settings = script.settingsBlob ?? ScriptPrompterSettings()
-        settings.fontSize = PrompterFontSize.clamp(fontSize)
-        script.settingsBlob = settings
-        try modelContext.save()
-    }
-
     func markUsed(_ script: Script, at date: Date = .now) throws {
         script.lastUsedAt = date
         try modelContext.save()

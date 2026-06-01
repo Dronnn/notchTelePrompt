@@ -31,7 +31,10 @@ struct MainView: View {
         onStartPrompter: ((Script) -> Void)? = nil
     ) {
         _libraryViewModel = State(initialValue: libraryViewModel)
-        _editorViewModel = State(initialValue: ScriptEditorViewModel(store: environment.scriptStore))
+        _editorViewModel = State(initialValue: ScriptEditorViewModel(
+            store: environment.scriptStore,
+            preferences: environment.preferencesStore
+        ))
         _importExportViewModel = State(initialValue: importExportViewModel)
         _setsViewModel = State(initialValue: setsViewModel)
         modelContainer = environment.modelContainer

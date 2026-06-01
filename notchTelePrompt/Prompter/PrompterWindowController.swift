@@ -77,6 +77,19 @@ final class PrompterWindowController: NSObject {
         // orderFront (never makeKeyAndOrderFront) keeps the panel non-activating and focus-safe.
         panel.orderFront(nil)
         visibilityStore.setVisible(true)
+        viewModel.setOverlayVisible(true)
+    }
+
+    /// re-presents the already-loaded overlay without resetting the script or the scroll position,
+    /// so the mini panel's show toggle brings the prompter back exactly where it left off.
+    func revealPrompter() {
+        guard viewModel.currentScript != nil else {
+            return
+        }
+        snapToNotch()
+        panel.orderFront(nil)
+        visibilityStore.setVisible(true)
+        viewModel.setOverlayVisible(true)
     }
 
     func hide() {
@@ -85,6 +98,16 @@ final class PrompterWindowController: NSObject {
         viewModel.disableVoiceMode()
         panel.orderOut(nil)
         visibilityStore.setVisible(false)
+        viewModel.setOverlayVisible(false)
+    }
+
+    /// flips the overlay between shown and hidden; used by the mini control panel's show/hide toggle.
+    func togglePrompterVisibility() {
+        if isVisible {
+            hide()
+        } else {
+            revealPrompter()
+        }
     }
 
     /// the most recently shown script, retained across hide so the overlay can be reopened.
@@ -179,7 +202,7 @@ final class PrompterWindowController: NSObject {
     /// the optional floating control panel; created on first use, sharing this overlay's view model.
     private lazy var controlPanelController: PrompterControlPanelController = {
         let controller = PrompterControlPanelController(viewModel: viewModel)
-        controller.onHidePrompter = { [weak self] in self?.hide() }
+        controller.onTogglePrompter = { [weak self] in self?.togglePrompterVisibility() }
         return controller
     }()
 

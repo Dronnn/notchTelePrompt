@@ -8,8 +8,9 @@
 
 import SwiftUI
 
-/// compact per-script prompter font-size stepper for the editor footer: smaller, current value, larger.
-/// reads and writes the size through the editor view model so changes sync live with the overlay.
+/// compact prompter font-size stepper for the editor footer: smaller, current value, larger.
+/// reads and writes the single global font size through the editor view model so changes sync live
+/// with the preferences pane and the overlay.
 struct FontSizeControlView: View {
     let viewModel: ScriptEditorViewModel
 

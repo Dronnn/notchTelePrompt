@@ -23,7 +23,7 @@ final class PrompterViewModel {
     }
 
     /// the script being shown. setting it resets the engine to the top, refreshes the font size mirror
-    /// from the script's stored settings and re-seeds the scroll speed from the current global default.
+    /// from the global default and re-seeds the scroll speed from the current global default.
     var currentScript: Script? {
         didSet {
             scrollEngine.stop()
@@ -34,9 +34,13 @@ final class PrompterViewModel {
         }
     }
 
-    /// the per-script prompter font size in points, mirrored from the current script's settings
-    /// (falling back to the default). the view layer binds to this instead of reading the @Model.
+    /// the prompter font size in points, mirrored from the global prompter defaults. the view layer
+    /// binds to this instead of reading the store directly.
     private(set) var fontSize = PrompterFontSize.default
+
+    /// whether the overlay panel is currently on screen. the mini control panel observes this to flip
+    /// its show/hide toggle, since it stays open while the overlay is hidden.
+    private(set) var isOverlayVisible = false
 
     /// the current reading line, derived from the engine's scroll offset and the line geometry.
     var currentLineIndex: Int {
@@ -119,19 +123,19 @@ final class PrompterViewModel {
 
     @ObservationIgnored private let voiceEngine = VoiceEngine()
 
-    /// persists font-size changes; injected so the overlay writes through the same store as the editor.
-    @ObservationIgnored private let store: ScriptStore?
-
     /// app preferences; read for the voice-follow tuning (sensitivity, silence delay, pause-on-silence).
     @ObservationIgnored private let preferences: PreferencesStore
-    @ObservationIgnored private var fontSizeObserver: NotificationObserverToken?
     @ObservationIgnored private var voiceConfigObserver: NotificationObserverToken?
     @ObservationIgnored private var prompterDefaultsObserver: NotificationObserverToken?
 
-    init(store: ScriptStore? = nil, preferences: PreferencesStore = PreferencesStore()) {
-        self.store = store
+    /// the prompter defaults last applied to the engine; used to detect which field changed so a font
+    /// tweak doesn't clobber a per-session speed tweak (and vice versa).
+    @ObservationIgnored private var lastAppliedDefaults: ScriptPrompterSettings
+
+    /// store is accepted for call-site compatibility; the prompter no longer persists per-script font.
+    init(store _: ScriptStore? = nil, preferences: PreferencesStore = PreferencesStore()) {
         self.preferences = preferences
-        observeFontSizeChanges()
+        lastAppliedDefaults = preferences.prompterDefaults
         observeVoiceConfigChanges()
         observePrompterDefaultsChanges()
         syncEngineGeometry()
@@ -301,30 +305,19 @@ final class PrompterViewModel {
         applyFontSize(PrompterFontSize.decremented(fontSize))
     }
 
-    /// clamps, mirrors, persists through the store and broadcasts so the editor stays in sync.
+    /// clamps and writes through the single global font default. persisting posts
+    /// .preferencesPrompterDefaultsDidChange, which the observer maps back to reloadFontSize.
     private func applyFontSize(_ newValue: Double) {
-        guard let script = currentScript else {
-            return
-        }
         let clamped = PrompterFontSize.clamp(newValue)
-        guard clamped != fontSize else {
+        guard clamped != preferences.prompterDefaults.fontSize else {
             return
         }
-        fontSize = clamped
-        syncEngineGeometry()
-        try? store?.setFontSize(clamped, on: script)
-        NotificationCenter.default.post(
-            name: .scriptFontSizeDidChange,
-            object: nil,
-            userInfo: [ScriptFontSizeChange.scriptIDKey: script.id]
-        )
+        preferences.prompterDefaults.fontSize = clamped
     }
 
-    /// refreshes the mirror from the current script's stored settings, falling back to the global default
-    /// font size when the script has none stored.
+    /// refreshes the mirror from the single global font default and keeps the engine geometry in step.
     private func reloadFontSize() {
-        let fallback = preferences.prompterDefaults.fontSize
-        fontSize = PrompterFontSize.clamp(currentScript?.settingsBlob?.fontSize ?? fallback)
+        fontSize = PrompterFontSize.clamp(preferences.prompterDefaults.fontSize)
         syncEngineGeometry()
     }
 
@@ -340,23 +333,6 @@ final class PrompterViewModel {
             fontSize: fontSize,
             lineSpacing: lineSpacing
         )
-    }
-
-    /// re-reads the size when another surface (the editor) changes it for the script we are showing.
-    private func observeFontSizeChanges() {
-        fontSizeObserver = NotificationObserverToken(NotificationCenter.default.addObserver(
-            forName: .scriptFontSizeDidChange,
-            object: nil,
-            queue: nil
-        ) { [weak self] notification in
-            let changedID = notification.userInfo?[ScriptFontSizeChange.scriptIDKey] as? UUID
-            Task { @MainActor in
-                guard let self, let changedID, self.currentScript?.id == changedID else {
-                    return
-                }
-                self.reloadFontSize()
-            }
-        })
     }
 
     /// retunes the running voice engine when the sensitivity / silence-delay preferences change. the
@@ -378,9 +354,9 @@ final class PrompterViewModel {
         })
     }
 
-    /// re-seeds the scroll speed and recomputes the line-spacing-driven geometry when the global prompter
-    /// defaults change, so an open overlay updates live. colour, opacity and alignment update on their own
-    /// because the views read those accessors (which read the @Observable store) inside their body.
+    /// reacts to a global prompter-defaults change by acting only on the field that actually changed,
+    /// so a font tweak doesn't re-seed (and clobber) a per-session speed tweak and vice versa. colour,
+    /// opacity and alignment need nothing here because the views read those accessors live in their body.
     private func observePrompterDefaultsChanges() {
         prompterDefaultsObserver = NotificationObserverToken(NotificationCenter.default.addObserver(
             forName: .preferencesPrompterDefaultsDidChange,
@@ -391,11 +367,32 @@ final class PrompterViewModel {
                 guard let self else {
                     return
                 }
-                // refresh the font-size mirror first so a global font-default change updates an open
-                // script that has no per-script size; reloadFontSize already keeps geometry in step.
-                self.reloadFontSize()
-                self.seedScrollSpeed()
+                self.applyDefaultsDelta()
             }
         })
+    }
+
+    /// compares the new defaults against the last-applied snapshot and updates only what changed.
+    private func applyDefaultsDelta() {
+        let new = preferences.prompterDefaults
+        let old = lastAppliedDefaults
+        lastAppliedDefaults = new
+
+        if new.fontSize != old.fontSize {
+            reloadFontSize()
+        }
+        if new.lineSpacing != old.lineSpacing {
+            syncEngineGeometry()
+        }
+        if new.scrollSpeed != old.scrollSpeed {
+            seedScrollSpeed()
+        }
+    }
+
+    // MARK: - Overlay visibility
+
+    /// records whether the overlay panel is on screen, so the mini panel can flip its show/hide toggle.
+    func setOverlayVisible(_ visible: Bool) {
+        isOverlayVisible = visible
     }
 }
