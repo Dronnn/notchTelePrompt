@@ -86,11 +86,17 @@ final class PrompterViewModel {
 
     /// persists font-size changes; injected so the overlay writes through the same store as the editor.
     @ObservationIgnored private let store: ScriptStore?
-    @ObservationIgnored private var fontSizeObserver: NotificationObserverToken?
 
-    init(store: ScriptStore? = nil) {
+    /// app preferences; read for the voice-follow tuning (sensitivity, silence delay, pause-on-silence).
+    @ObservationIgnored private let preferences: PreferencesStore
+    @ObservationIgnored private var fontSizeObserver: NotificationObserverToken?
+    @ObservationIgnored private var voiceConfigObserver: NotificationObserverToken?
+
+    init(store: ScriptStore? = nil, preferences: PreferencesStore = PreferencesStore()) {
         self.store = store
+        self.preferences = preferences
         observeFontSizeChanges()
+        observeVoiceConfigChanges()
         syncEngineGeometry()
         scrollEngine.setSpeed(.default(fontSize: fontSize, lineSpacing: lineSpacing))
 
@@ -171,6 +177,7 @@ final class PrompterViewModel {
             }
             isVoiceModeEnabled = true
             scrollEngine.isVoiceDriven = true
+            voiceEngine.updateConfiguration(preferences.voiceConfiguration)
             voiceEngine.enable()
             // settle playback immediately: silence on enable should hold the scroll until speech.
             reconcileVoicePlayback()
@@ -192,6 +199,8 @@ final class PrompterViewModel {
     /// reconciles scroll playback with the live voice inputs: scroll only while speaking and not hovering
     /// (explicit hover-to-pause wins), pause otherwise. level-driven rather than edge-driven, so enabling
     /// voice, switching scripts and hover changes all settle correctly. a no-op when voice mode is off.
+    /// when the pause-on-silence preference is off, a silence no longer pauses (only hover does), so the
+    /// scroll keeps running once speech has started it.
     private func reconcileVoicePlayback() {
         guard isVoiceModeEnabled, currentScript != nil else {
             return
@@ -206,8 +215,11 @@ final class PrompterViewModel {
             case .playing, .countdown, .finished:
                 break
             }
-        } else if scrollEngine.state == .playing {
-            scrollEngine.pause()
+        } else {
+            let shouldPause = scrollEngine.isHovering || preferences.pauseOnSilence
+            if shouldPause, scrollEngine.state == .playing {
+                scrollEngine.pause()
+            }
         }
     }
 
@@ -297,6 +309,23 @@ final class PrompterViewModel {
                     return
                 }
                 self.reloadFontSize()
+            }
+        })
+    }
+
+    /// retunes the running voice engine when the sensitivity / silence-delay preferences change. the
+    /// engine ignores the update harmlessly when capture isn't running, so no running-state check is needed.
+    private func observeVoiceConfigChanges() {
+        voiceConfigObserver = NotificationObserverToken(NotificationCenter.default.addObserver(
+            forName: .preferencesVoiceConfigDidChange,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else {
+                    return
+                }
+                self.voiceEngine.updateConfiguration(self.preferences.voiceConfiguration)
             }
         })
     }

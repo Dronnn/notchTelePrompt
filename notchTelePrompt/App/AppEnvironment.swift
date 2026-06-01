@@ -17,6 +17,7 @@ final class AppEnvironment {
     let modelContainer: ModelContainer
     let scriptStore: ScriptStore
     let promptSetStore: PromptSetStore
+    let preferencesStore = PreferencesStore()
 
     init() {
         do {

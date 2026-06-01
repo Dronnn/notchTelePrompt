@@ -25,8 +25,8 @@ final class PrompterWindowController: NSObject {
         panel.isVisible
     }
 
-    init(store: ScriptStore, defaults: UserDefaults = .standard) {
-        let viewModel = PrompterViewModel(store: store)
+    init(store: ScriptStore, preferences: PreferencesStore, defaults: UserDefaults = .standard) {
+        let viewModel = PrompterViewModel(store: store, preferences: preferences)
         self.viewModel = viewModel
         visibilityStore = PrompterVisibilityStore(defaults: defaults)
 

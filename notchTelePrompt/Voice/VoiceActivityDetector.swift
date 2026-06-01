@@ -49,6 +49,15 @@ nonisolated struct VoiceActivityDetector {
         return isSpeaking
     }
 
+    // MARK: - Configuration
+
+    /// applies a configuration's thresholds and delay in one call, without touching the running state.
+    mutating func apply(_ configuration: VoiceActivityConfiguration) {
+        speechThreshold = configuration.speechThreshold
+        silenceThreshold = configuration.silenceThreshold
+        silenceDelay = configuration.silenceDelay
+    }
+
     // MARK: - Reset
 
     mutating func reset() {

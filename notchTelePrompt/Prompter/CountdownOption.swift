@@ -26,4 +26,19 @@ nonisolated enum CountdownOption: CaseIterable {
             10
         }
     }
+
+    // MARK: - Persistence
+
+    /// the sentinel persisted for .off, distinct from any real duration.
+    private static let offSentinel = -1
+
+    /// a stable Int for UserDefaults: the seconds for a real countdown, or a sentinel for .off.
+    var persistedValue: Int {
+        seconds ?? Self.offSentinel
+    }
+
+    /// reverses persistedValue, falling back to .off for the sentinel or any unknown value.
+    init(persistedValue: Int) {
+        self = Self.allCases.first { $0.seconds == persistedValue } ?? .off
+    }
 }

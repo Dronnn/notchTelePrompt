@@ -12,6 +12,10 @@ import Foundation
 /// without holding references to each other. the userInfo carries the affected script id.
 extension Notification.Name {
     static let scriptFontSizeDidChange = Notification.Name("scriptFontSizeDidChange")
+
+    /// broadcast when the voice sensitivity or silence delay preference changes, so a live prompter can
+    /// retune the running voice engine without the preferences pane holding a reference to it.
+    static let preferencesVoiceConfigDidChange = Notification.Name("preferencesVoiceConfigDidChange")
 }
 
 /// userInfo key for the changed script's id on a scriptFontSizeDidChange notification.

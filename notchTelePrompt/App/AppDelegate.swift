@@ -39,7 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainWindowController = windowController
         windowController.onStartPrompter = { [weak self] script in self?.showPrompter(script) }
 
-        prompterController = PrompterWindowController(store: environment.scriptStore)
+        prompterController = PrompterWindowController(
+            store: environment.scriptStore,
+            preferences: environment.preferencesStore
+        )
         prompterController?.onVoicePermissionDenied = { [weak self] in self?.presentMicrophoneDeniedAlert() }
         prompterController?.onVoiceUnavailable = { [weak self] in self?.presentMicrophoneUnavailableAlert() }
 

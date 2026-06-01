@@ -64,6 +64,12 @@ final class VoiceEngine {
         stop()
     }
 
+    /// retunes the detector's sensitivity/silence behavior. safe to call while capturing: it only
+    /// updates the detector's thresholds and never reinstalls the tap or restarts the engine.
+    func updateConfiguration(_ configuration: VoiceActivityConfiguration) {
+        detector.apply(configuration)
+    }
+
     // MARK: - Hardware changes
 
     /// the audio engine stops and uninitializes when the input device or its format changes (e.g. the user
