@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// holds the state the floating set navigator renders: the active set, its resolved scripts in order,
 /// and which script is currently highlighted. selecting a row (or stepping next/previous) reports the
@@ -29,6 +30,7 @@ final class SetNavigatorViewModel {
     @ObservationIgnored private let promptSetStore: PromptSetStore
     @ObservationIgnored private let scriptStore: ScriptStore
     @ObservationIgnored private var setChangeObserver: NotificationObserverToken?
+    @ObservationIgnored private let logger = Logger(subsystem: "com.notchTelePrompt", category: "navigator")
 
     init(promptSetStore: PromptSetStore, scriptStore: ScriptStore) {
         self.promptSetStore = promptSetStore
@@ -110,7 +112,17 @@ final class SetNavigatorViewModel {
         guard let set = activeSet else {
             return
         }
-        try? promptSetStore.move(in: set, fromOffsets: fromOffsets, toOffset: toOffset)
+        do {
+            try promptSetStore.move(in: set, fromOffsets: fromOffsets, toOffset: toOffset)
+        } catch {
+            // the reorder didn't persist; refresh snaps the rows back to the stored order.
+            logger
+                .warning(
+                    "reordering the active set failed; rows reverted: \(error.localizedDescription, privacy: .public)"
+                )
+            refresh()
+            return
+        }
         refresh()
         NotificationCenter.default.post(
             name: .promptSetDidChange,
