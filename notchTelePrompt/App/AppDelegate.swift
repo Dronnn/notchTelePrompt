@@ -58,6 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setNavigatorController = navigator
 
         library.onScriptDeleted = { [weak self] id in self?.prompterController?.forgetScript(id) }
+        preferences.onExportAllScripts = { [weak self] in self?.exportAllScripts() }
+        preferences.onClearLocalData = { [weak self] in self?.confirmAndClearLocalData() }
         menuBarController = makeMenuBarController(windowController: windowController, importExportVM: importExportVM)
         configureShortcuts()
         applyLaunchPreferences()
@@ -214,6 +216,65 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showPreferences() {
         preferences.show()
+    }
+
+    // MARK: - Privacy
+
+    /// lets the user pick a folder, then exports every script as a .txt into it (privacy pane).
+    /// runs the write in a Task so the panel returns immediately; a write failure shows a brief alert.
+    private func exportAllScripts() {
+        guard let importExportViewModel else {
+            return
+        }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = String(localized: "Export")
+
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK, let directory = panel.url else {
+            return
+        }
+        Task {
+            await importExportViewModel.exportAllScripts(to: directory)
+            if let message = importExportViewModel.errorMessage {
+                importExportViewModel.errorMessage = nil
+                presentExportAllFailedAlert(message: message)
+            }
+        }
+    }
+
+    /// shows a destructive confirmation, then deletes all scripts and prompt sets and resets dependent
+    /// state. best-effort: a store failure is swallowed so a partial clear never crashes the app.
+    private func confirmAndClearLocalData() {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Clear local data?")
+        alert.informativeText = String(localized: "Delete all scripts and prompt sets? This can't be undone.")
+        let deleteButton = alert.addButton(withTitle: String(localized: "Delete"))
+        deleteButton.hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            return
+        }
+        try? environment.scriptStore.deleteAll()
+        try? environment.promptSetStore.deleteAll()
+        environment.preferencesStore.lastShownScriptID = nil
+        prompterController?.forgetAll()
+        libraryViewModel?.refresh()
+        setNavigatorController?.refresh()
+    }
+
+    /// surfaces a failure during export-all without crashing; the underlying message comes from the view model.
+    private func presentExportAllFailedAlert(message: String) {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Couldn't export all scripts")
+        alert.informativeText = message
+        alert.runModal()
     }
 
     /// guides the user to enable microphone access when voice-follow was denied (spec §9.1).

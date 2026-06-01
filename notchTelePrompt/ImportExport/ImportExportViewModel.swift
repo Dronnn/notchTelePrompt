@@ -81,6 +81,36 @@ final class ImportExportViewModel {
         await exportScript(script, format: format)
     }
 
+    /// writes every script as a UTF-8 .txt into the chosen directory, reusing the same encoding as the
+    /// single-script export. filenames are derived from each title, sanitized for the filesystem and
+    /// de-duplicated on collision; line breaks are preserved by writing the stored text verbatim.
+    /// no-op when there are no scripts; surfaces a single error message on failure.
+    func exportAllScripts(to directory: URL) async {
+        isExporting = true
+        defer { isExporting = false }
+        do {
+            let scripts = try store.fetchAll()
+            guard !scripts.isEmpty else {
+                return
+            }
+            // build (filename, data) pairs on the main actor: Script is not Sendable, so nothing
+            // model-backed crosses into the detached write.
+            var usedNames: Set<String> = []
+            let files: [(name: String, data: Data)] = scripts.map { script in
+                let name = Self.uniqueFileName(for: script.title, usedNames: &usedNames)
+                return (name, ScriptTextCore.fileData(for: script.text, format: .txt))
+            }
+            try await Task.detached {
+                for file in files {
+                    let url = directory.appending(path: file.name)
+                    try file.data.write(to: url, options: .atomic)
+                }
+            }.value
+        } catch {
+            errorMessage = ImportExportError.exportFailed(underlying: error).localizedDescription
+        }
+    }
+
     // MARK: - Drag-drop
 
     func handleDroppedFile(url: URL, into editorViewModel: ScriptEditorViewModel) async {
@@ -139,5 +169,26 @@ final class ImportExportViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// builds a filesystem-safe ".txt" filename from a title, falling back to "Untitled", and appends a
+    /// " 2", " 3" suffix when a base name has already been used so export-all never overwrites a file.
+    private static func uniqueFileName(for title: String, usedNames: inout Set<String>) -> String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let illegal = CharacterSet(charactersIn: "/\\:")
+        let sanitized = trimmed
+            .components(separatedBy: illegal)
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = sanitized.isEmpty ? String(localized: "Untitled") : sanitized
+
+        var candidate = base
+        var index = 2
+        while usedNames.contains(candidate) {
+            candidate = "\(base) \(index)"
+            index += 1
+        }
+        usedNames.insert(candidate)
+        return "\(candidate).txt"
     }
 }

@@ -111,6 +111,14 @@ final class PromptSetStore {
         try modelContext.save()
     }
 
+    /// removes every prompt set in one save and clears the active-set selection; used by the privacy
+    /// pane's clear-local-data action.
+    func deleteAll() throws {
+        activeSetID = nil
+        try modelContext.delete(model: PromptSet.self)
+        try modelContext.save()
+    }
+
     // MARK: - Duplicate
 
     @discardableResult

@@ -13,6 +13,9 @@ import SwiftUI
 struct PreferencesView: View {
     let preferencesStore: PreferencesStore
     let scriptStore: ScriptStore
+    /// invoked by the privacy pane; the actual work lives in the app delegate.
+    var onExportAllScripts: () -> Void = {}
+    var onClearLocalData: () -> Void = {}
 
     @State private var selection: PreferencePane = .general
 
@@ -27,7 +30,9 @@ struct PreferencesView: View {
             PreferenceDetailView(
                 pane: selection,
                 preferencesStore: preferencesStore,
-                scriptStore: scriptStore
+                scriptStore: scriptStore,
+                onExportAllScripts: onExportAllScripts,
+                onClearLocalData: onClearLocalData
             )
         }
         .frame(minWidth: 460, minHeight: 360)
@@ -40,6 +45,8 @@ private struct PreferenceDetailView: View {
     let pane: PreferencePane
     let preferencesStore: PreferencesStore
     let scriptStore: ScriptStore
+    let onExportAllScripts: () -> Void
+    let onClearLocalData: () -> Void
 
     var body: some View {
         Group {
@@ -53,7 +60,10 @@ private struct PreferenceDetailView: View {
             case .shortcuts:
                 ShortcutsSettingsView()
             case .privacy:
-                PrivacySettingsView()
+                PrivacySettingsView(
+                    onExportAllScripts: onExportAllScripts,
+                    onClearLocalData: onClearLocalData
+                )
             }
         }
         .frame(minWidth: 280, minHeight: 320)

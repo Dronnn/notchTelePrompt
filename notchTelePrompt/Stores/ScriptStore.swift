@@ -113,6 +113,12 @@ final class ScriptStore {
         try modelContext.save()
     }
 
+    /// removes every script in one save; used by the privacy pane's clear-local-data action.
+    func deleteAll() throws {
+        try modelContext.delete(model: Script.self)
+        try modelContext.save()
+    }
+
     // MARK: - Duplicate
 
     @discardableResult

@@ -98,6 +98,12 @@ final class PrompterWindowController: NSObject {
         viewModel.currentScript = nil
     }
 
+    /// drops the overlay's script and hides it; used when clearing all local data removes every script.
+    func forgetAll() {
+        hide()
+        viewModel.currentScript = nil
+    }
+
     // MARK: - Playback controls
 
     /// whether the engine is actively scrolling; drives the menu's dynamic Start / Pause title.

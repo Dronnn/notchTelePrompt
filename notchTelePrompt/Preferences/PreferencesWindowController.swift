@@ -18,6 +18,11 @@ final class PreferencesWindowController: NSObject {
     private let preferencesStore: PreferencesStore
     private let scriptStore: ScriptStore
 
+    /// invoked from the privacy pane; set by the app delegate after construction. the window is built
+    /// lazily on first show(), so these are captured by then.
+    var onExportAllScripts: (() -> Void)?
+    var onClearLocalData: (() -> Void)?
+
     // MARK: - Lifecycle
 
     init(preferencesStore: PreferencesStore, scriptStore: ScriptStore) {
@@ -49,7 +54,12 @@ final class PreferencesWindowController: NSObject {
         // the controller outlives a closed window, so reopening must not use a deallocated instance.
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(
-            rootView: PreferencesView(preferencesStore: preferencesStore, scriptStore: scriptStore)
+            rootView: PreferencesView(
+                preferencesStore: preferencesStore,
+                scriptStore: scriptStore,
+                onExportAllScripts: { [weak self] in self?.onExportAllScripts?() },
+                onClearLocalData: { [weak self] in self?.onClearLocalData?() }
+            )
         )
         window.center()
         return window
