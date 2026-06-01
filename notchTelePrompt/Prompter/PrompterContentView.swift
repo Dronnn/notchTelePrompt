@@ -8,9 +8,8 @@
 
 import SwiftUI
 
-/// minimal prompter rendering: the current script text on a translucent dark background,
-/// with subtle close and snap-to-notch controls that fade in on hover.
-/// phase 6 replaces the text body with rich, scrollable, mirrored rendering.
+/// prompter rendering: the current script text on a translucent dark background,
+/// with a subtle progress bar and close / snap-to-notch controls that fade in on hover.
 struct PrompterContentView: View {
     let viewModel: PrompterViewModel
     let onClose: () -> Void
@@ -19,21 +18,34 @@ struct PrompterContentView: View {
     @State private var isHovering = false
 
     var body: some View {
-        ScrollView {
-            Text(viewModel.currentScript?.text ?? String(localized: "No script selected."))
+        PrompterBodyView(viewModel: viewModel)
+            .background(.black.opacity(0.82))
+            .overlay(alignment: .bottom) {
+                PrompterProgressBar(progress: viewModel.progress)
+            }
+            .overlay(alignment: .topTrailing) {
+                PrompterControlsView(onClose: onClose, onSnap: onSnap)
+                    .opacity(isHovering ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.15), value: isHovering)
+            }
+            .clipShape(.rect(cornerRadius: 8))
+            .onHover { isHovering = $0 }
+    }
+}
+
+/// the prompter's text body: the scrollable line rendering when a script is loaded,
+/// or a centered placeholder when none is selected.
+private struct PrompterBodyView: View {
+    let viewModel: PrompterViewModel
+
+    var body: some View {
+        if viewModel.currentScript == nil {
+            Text("No script selected.")
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            PrompterTextView(viewModel: viewModel)
         }
-        .scrollIndicators(.hidden)
-        .background(.black.opacity(0.82))
-        .overlay(alignment: .topTrailing) {
-            PrompterControlsView(onClose: onClose, onSnap: onSnap)
-                .opacity(isHovering ? 1 : 0)
-                .animation(.easeInOut(duration: 0.15), value: isHovering)
-        }
-        .clipShape(.rect(cornerRadius: 8))
-        .onHover { isHovering = $0 }
     }
 }
 

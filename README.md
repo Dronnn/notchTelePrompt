@@ -40,7 +40,9 @@ Implemented so far:
 - **Import / export** — import `.txt` / `.md` files, paste the clipboard as a new script (auto-titled), drag a file onto the editor, and export the current script — all UTF-8 with line breaks preserved.
 - **Prompter overlay** — a borderless, non-activating panel that floats the script around the camera (centered below the notch) on the built-in display, above other apps and without stealing focus. Drag it anywhere and snap it back to the notch; close and reopen it from on-screen controls or the menu bar. It asks macOS to stay out of screen captures (best-effort; not guaranteed — see the in-app note). Launch it from the editor's Start Prompter button or the menu-bar Show Prompter item.
 
-Next up: rich prompter rendering — readable typography, current-line highlighting, and smooth scrolling.
+- **Prompter display** — large readable text with the current line emphasized and the rest gently dimmed, paragraphs and line breaks preserved, plus a subtle progress bar — tuned for reading at a glance near the camera.
+
+Next up: the scroll engine — countdown, fixed-speed auto-scroll, pause/resume, and hover-to-pause.
 
 ## License
 
