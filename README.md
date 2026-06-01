@@ -50,7 +50,9 @@ Implemented so far:
 
 - **Voice-follow (on-device)** — turn on voice mode and the prompter scrolls while you speak and pauses when you stop, using on-device voice-activity detection (energy with hysteresis and a short silence delay). Nothing is recorded or sent anywhere, and the microphone is accessed only after you enable it. A subtle mic indicator shows it is listening and brightens when it hears you.
 
-Next up: a preferences window (general, prompter, voice sensitivity, shortcuts, privacy).
+- **Preferences** — a settings window with General (launch at login, show in the Dock, reopen the last prompter, open the editor on launch), Prompter (default text size, colour, alignment, background opacity, line spacing, scroll speed and countdown, plus quick presets), Voice (a single sensitivity slider, silence delay, pause-on-silence and the microphone status), Shortcuts (rebind every hotkey), and Privacy (a local-only statement, the screen-capture caveat, export all scripts, and clear local data). Appearance and voice settings take effect live, and everything persists across launches.
+
+Next up: error handling, accessibility and localization polish.
 
 ## License
 
