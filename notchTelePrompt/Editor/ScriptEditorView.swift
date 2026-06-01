@@ -12,12 +12,17 @@ import SwiftUI
 struct ScriptEditorView: View {
     @Bindable var viewModel: ScriptEditorViewModel
     let importExportViewModel: ImportExportViewModel
+    let onStartPrompter: ((Script) -> Void)?
 
     var body: some View {
         if viewModel.selectedScript == nil {
             EmptyEditorView()
         } else {
-            ScriptEditorContentView(viewModel: viewModel, importExportViewModel: importExportViewModel)
+            ScriptEditorContentView(
+                viewModel: viewModel,
+                importExportViewModel: importExportViewModel,
+                onStartPrompter: onStartPrompter
+            )
         }
     }
 }

@@ -19,23 +19,30 @@ struct MainView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
 
     private let modelContainer: ModelContainer
+    private let onStartPrompter: ((Script) -> Void)?
 
     init(
         environment: AppEnvironment,
         libraryViewModel: LibraryViewModel,
-        importExportViewModel: ImportExportViewModel
+        importExportViewModel: ImportExportViewModel,
+        onStartPrompter: ((Script) -> Void)? = nil
     ) {
         _libraryViewModel = State(initialValue: libraryViewModel)
         _editorViewModel = State(initialValue: ScriptEditorViewModel(store: environment.scriptStore))
         _importExportViewModel = State(initialValue: importExportViewModel)
         modelContainer = environment.modelContainer
+        self.onStartPrompter = onStartPrompter
     }
 
     var body: some View {
         NavigationSplitView {
             LibraryView(viewModel: libraryViewModel)
         } detail: {
-            ScriptEditorView(viewModel: editorViewModel, importExportViewModel: importExportViewModel)
+            ScriptEditorView(
+                viewModel: editorViewModel,
+                importExportViewModel: importExportViewModel,
+                onStartPrompter: onStartPrompter
+            )
         }
         .onChange(of: libraryViewModel.selectedScript) { _, newValue in
             editorViewModel.selectedScript = newValue

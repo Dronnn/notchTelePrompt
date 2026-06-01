@@ -50,6 +50,11 @@ final class ScriptStore {
         return try modelContext.fetch(descriptor)
     }
 
+    /// the single most recently used script, or nil if none has been used; convenience for the prompter entry point.
+    var mostRecentScript: Script? {
+        (try? recent(limit: 1))?.first
+    }
+
     /// filters by query using localized, case- and diacritic-insensitive matching on title and text.
     func search(_ query: String, sortedBy order: ScriptSortOrder = .updatedDescending) throws -> [Script] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)

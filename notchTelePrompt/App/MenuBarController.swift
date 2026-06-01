@@ -17,6 +17,7 @@ final class MenuBarController {
     var onImportScript: (() -> Void)?
     var onPasteClipboard: (() -> Void)?
     var onExportScript: (() -> Void)?
+    var onShowPrompter: (() -> Void)?
 
     private let statusItem: NSStatusItem
 
@@ -112,9 +113,10 @@ final class MenuBarController {
         windowController?.open()
     }
 
-    // TODO: wire to the prompter overlay in phase 4.
     @objc
-    private func showPrompter() {}
+    private func showPrompter() {
+        onShowPrompter?()
+    }
 
     // TODO: wire to the preferences window in phase 10.
     @objc

@@ -13,6 +13,7 @@ import SwiftUI
 struct ScriptEditorContentView: View {
     @Bindable var viewModel: ScriptEditorViewModel
     let importExportViewModel: ImportExportViewModel
+    let onStartPrompter: ((Script) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -61,9 +62,12 @@ struct ScriptEditorContentView: View {
                 }
             }
 
-            Button("Start Prompter", systemImage: "play.fill") {}
-                .disabled(true)
-                .help("Available once the prompter overlay is built (Phase 4).")
+            Button("Start Prompter", systemImage: "play.fill") {
+                if let script = viewModel.selectedScript {
+                    onStartPrompter?(script)
+                }
+            }
+            .disabled(viewModel.selectedScript == nil)
         }
     }
 }

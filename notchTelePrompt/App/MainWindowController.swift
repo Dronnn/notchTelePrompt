@@ -15,16 +15,23 @@ import SwiftUI
 final class MainWindowController {
     private let window: NSWindow
 
+    /// set by the app delegate after construction; the editor's Start Prompter button reads it at call time.
+    var onStartPrompter: ((Script) -> Void)?
+
     init(
         environment: AppEnvironment,
         libraryViewModel: LibraryViewModel,
         importExportViewModel: ImportExportViewModel
     ) {
+        // forward through a stable closure so late assignment of onStartPrompter is still picked up.
+        var forwardStart: ((Script) -> Void)?
+        let forwardToController: (Script) -> Void = { script in forwardStart?(script) }
         let hostingController = NSHostingController(
             rootView: MainView(
                 environment: environment,
                 libraryViewModel: libraryViewModel,
-                importExportViewModel: importExportViewModel
+                importExportViewModel: importExportViewModel,
+                onStartPrompter: forwardToController
             )
         )
         window = NSWindow(contentViewController: hostingController)
@@ -34,6 +41,8 @@ final class MainWindowController {
         window.center()
         // the controller outlives a closed window, so reopening must not use a deallocated instance.
         window.isReleasedWhenClosed = false
+
+        forwardStart = { [weak self] script in self?.onStartPrompter?(script) }
     }
 
     // MARK: - Presentation

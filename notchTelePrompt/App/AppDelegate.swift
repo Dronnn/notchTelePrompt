@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
     private var mainWindowController: MainWindowController?
     private var importExportViewModel: ImportExportViewModel?
+    private var prompterController: PrompterWindowController?
 
     func applicationDidFinishLaunching(_: Notification) {
         let libraryViewModel = LibraryViewModel(store: environment.scriptStore)
@@ -30,9 +31,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         mainWindowController = windowController
 
+        let prompter = PrompterWindowController()
+        prompterController = prompter
+        windowController.onStartPrompter = { [weak prompter] script in prompter?.show(script: script) }
+
         let menuBar = MenuBarController()
         menuBar.windowController = windowController
         menuBar.onNewScript = { [weak windowController] in windowController?.open() }
+        menuBar.onShowPrompter = { [weak prompter, weak environment = self.environment] in
+            prompter?.toggle(script: environment?.scriptStore.mostRecentScript)
+        }
         menuBar.onImportScript = { [weak windowController, weak importExportVM] in
             windowController?.open()
             Task { await importExportVM?.importScript() }
