@@ -12,7 +12,9 @@ import Testing
 
 struct ImportExportErrorTests {
     private struct SampleError: LocalizedError {
-        var errorDescription: String? { "disk is full" }
+        var errorDescription: String? {
+            "disk is full"
+        }
     }
 
     @Test
