@@ -21,7 +21,8 @@ struct PrompterTextView: View {
                     ForEach(viewModel.lines.indices, id: \.self) { index in
                         PrompterLineView(
                             text: viewModel.lines[index],
-                            distance: index - viewModel.currentLineIndex
+                            distance: index - viewModel.currentLineIndex,
+                            fontSize: CGFloat(viewModel.fontSize)
                         )
                         .id(index)
                     }

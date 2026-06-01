@@ -30,15 +30,30 @@ final class ScriptEditorViewModel {
     private(set) var isDirty = false
     var errorMessage: String?
 
+    /// the per-script prompter font size in points, mirrored from the selected script's settings;
+    /// the view binds to this rather than reading the @Model directly.
+    private(set) var fontSize = PrompterFontSize.default
+
+    /// bound by the +/- control to disable the buttons at the range bounds.
+    var canIncreaseFontSize: Bool {
+        fontSize < PrompterFontSize.max
+    }
+
+    var canDecreaseFontSize: Bool {
+        fontSize > PrompterFontSize.min
+    }
+
     private let wpm: Int
     private let store: ScriptStore
     private var autosaveTask: Task<Void, Never>?
     private var isLoading = false
+    @ObservationIgnored private var fontSizeObserver: NotificationObserverToken?
 
     init(store: ScriptStore, wpm: Int = 150) {
         self.store = store
         self.wpm = wpm
         updateStats()
+        observeFontSizeChanges()
     }
 
     // MARK: - Selection
@@ -54,6 +69,7 @@ final class ScriptEditorViewModel {
         isLoading = true
         title = selectedScript?.title ?? ""
         text = selectedScript?.text ?? ""
+        reloadFontSize()
         updateStats()
         isDirty = false
         isLoading = false
@@ -111,5 +127,59 @@ final class ScriptEditorViewModel {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    // MARK: - Font size
+
+    func increaseFontSize() {
+        applyFontSize(PrompterFontSize.incremented(fontSize))
+    }
+
+    func decreaseFontSize() {
+        applyFontSize(PrompterFontSize.decremented(fontSize))
+    }
+
+    /// clamps, mirrors, persists through the store and broadcasts so the overlay stays in sync.
+    private func applyFontSize(_ newValue: Double) {
+        guard let selectedScript else {
+            return
+        }
+        let clamped = PrompterFontSize.clamp(newValue)
+        guard clamped != fontSize else {
+            return
+        }
+        fontSize = clamped
+        do {
+            try store.setFontSize(clamped, on: selectedScript)
+            NotificationCenter.default.post(
+                name: .scriptFontSizeDidChange,
+                object: nil,
+                userInfo: [ScriptFontSizeChange.scriptIDKey: selectedScript.id]
+            )
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    /// refreshes the mirror from the selected script's stored settings, defaulting when none exist.
+    private func reloadFontSize() {
+        fontSize = PrompterFontSize.clamp(selectedScript?.settingsBlob?.fontSize ?? PrompterFontSize.default)
+    }
+
+    /// re-reads the size when another surface (the overlay) changes it for the selected script.
+    private func observeFontSizeChanges() {
+        fontSizeObserver = NotificationObserverToken(NotificationCenter.default.addObserver(
+            forName: .scriptFontSizeDidChange,
+            object: nil,
+            queue: nil
+        ) { [weak self] notification in
+            let changedID = notification.userInfo?[ScriptFontSizeChange.scriptIDKey] as? UUID
+            Task { @MainActor in
+                guard let self, let changedID, self.selectedScript?.id == changedID else {
+                    return
+                }
+                self.reloadFontSize()
+            }
+        })
     }
 }

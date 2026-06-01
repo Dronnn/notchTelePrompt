@@ -34,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainWindowController = windowController
         windowController.onStartPrompter = { [weak self] script in self?.showPrompter(script) }
 
-        prompterController = PrompterWindowController()
+        prompterController = PrompterWindowController(store: environment.scriptStore)
         library.onScriptDeleted = { [weak self] id in self?.prompterController?.forgetScript(id) }
         menuBarController = makeMenuBarController(windowController: windowController, importExportVM: importExportVM)
     }

@@ -36,11 +36,14 @@ struct ScriptEditorContentView: View {
 
             Divider()
 
-            StatsFooterView(
-                wordCount: viewModel.wordCount,
-                charCount: viewModel.charCount,
-                readingTime: viewModel.readingTime
-            )
+            HStack {
+                StatsFooterView(
+                    wordCount: viewModel.wordCount,
+                    charCount: viewModel.charCount,
+                    readingTime: viewModel.readingTime
+                )
+                FontSizeControlView(viewModel: viewModel)
+            }
         }
         .padding()
         .dropDestination(for: URL.self) { urls, _ in

@@ -138,6 +138,59 @@ struct ScriptEditorViewModelTests {
         #expect(reloaded?.text == "untouched body")
     }
 
+    // MARK: - Font size
+
+    @Test
+    func fontSizeDefaultsWhenScriptHasNoSettings() throws {
+        let store = try makeStore()
+        let script = try store.create(title: "Plain")
+        let viewModel = ScriptEditorViewModel(store: store)
+        viewModel.selectedScript = script
+        #expect(viewModel.fontSize == PrompterFontSize.default)
+    }
+
+    @Test
+    func increaseAndDecreaseFontSizePersistThroughStore() throws {
+        let store = try makeStore()
+        let script = try store.create(title: "Sized")
+        let viewModel = ScriptEditorViewModel(store: store)
+        viewModel.selectedScript = script
+        viewModel.increaseFontSize()
+        #expect(viewModel.fontSize == PrompterFontSize.default + PrompterFontSize.step)
+        #expect(script.settingsBlob?.fontSize == PrompterFontSize.default + PrompterFontSize.step)
+        viewModel.decreaseFontSize()
+        #expect(viewModel.fontSize == PrompterFontSize.default)
+        #expect(script.settingsBlob?.fontSize == PrompterFontSize.default)
+    }
+
+    @Test
+    func fontSizeMirrorReloadsFromSelectedScript() throws {
+        let store = try makeStore()
+        let script = try store.create(title: "Sized")
+        try store.setFontSize(60, on: script)
+        let viewModel = ScriptEditorViewModel(store: store)
+        viewModel.selectedScript = script
+        #expect(viewModel.fontSize == 60)
+    }
+
+    @Test
+    func fontSizeBoundsDisableFlags() throws {
+        let store = try makeStore()
+        let script = try store.create(title: "Sized")
+        let viewModel = ScriptEditorViewModel(store: store)
+        viewModel.selectedScript = script
+        try store.setFontSize(PrompterFontSize.max, on: script)
+        viewModel.selectedScript = nil
+        viewModel.selectedScript = script
+        #expect(viewModel.canIncreaseFontSize == false)
+        #expect(viewModel.canDecreaseFontSize == true)
+        try store.setFontSize(PrompterFontSize.min, on: script)
+        viewModel.selectedScript = nil
+        viewModel.selectedScript = script
+        #expect(viewModel.canDecreaseFontSize == false)
+        #expect(viewModel.canIncreaseFontSize == true)
+    }
+
     @Test
     func emptyTitleIsAllowed() throws {
         let store = try makeStore()

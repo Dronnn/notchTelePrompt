@@ -13,11 +13,12 @@ import SwiftUI
 struct PrompterLineView: View {
     let text: String
     let distance: Int
+    let fontSize: CGFloat
 
     var body: some View {
         // a blank line renders a space so it keeps paragraph height.
         Text(text.isEmpty ? " " : text)
-            .font(.system(size: PrompterStyle.fontSize))
+            .font(.system(size: fontSize))
             .bold(PrompterLineEmphasis.isCurrent(distance))
             .foregroundStyle(.white)
             .opacity(PrompterLineEmphasis.opacity(distanceFromCurrent: distance))

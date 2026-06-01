@@ -9,7 +9,7 @@
 import Foundation
 
 /// how the prompter overlay is positioned on screen.
-enum PrompterDisplayMode: String, Codable, CaseIterable {
+nonisolated enum PrompterDisplayMode: String, Codable, CaseIterable {
     case notch
     case topOverlay
     case floating

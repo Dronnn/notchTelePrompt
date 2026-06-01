@@ -24,7 +24,7 @@ struct PrompterContentView: View {
                 PrompterProgressBar(progress: viewModel.progress)
             }
             .overlay(alignment: .topTrailing) {
-                PrompterControlsView(onClose: onClose, onSnap: onSnap)
+                PrompterControlsView(viewModel: viewModel, onClose: onClose, onSnap: onSnap)
                     .opacity(isHovering ? 1 : 0)
                     .animation(.easeInOut(duration: 0.15), value: isHovering)
             }
@@ -49,13 +49,22 @@ private struct PrompterBodyView: View {
     }
 }
 
-/// the subtle hover-revealed control row over the prompter text: snap-to-notch and close.
+/// the subtle hover-revealed control row over the prompter text: font size, snap-to-notch and close.
 private struct PrompterControlsView: View {
+    let viewModel: PrompterViewModel
     let onClose: () -> Void
     let onSnap: () -> Void
 
     var body: some View {
         HStack {
+            Button("Smaller text", systemImage: "textformat.size.smaller") {
+                viewModel.decreaseFontSize()
+            }
+            .disabled(viewModel.fontSize <= PrompterFontSize.min)
+            Button("Larger text", systemImage: "textformat.size.larger") {
+                viewModel.increaseFontSize()
+            }
+            .disabled(viewModel.fontSize >= PrompterFontSize.max)
             Button("Snap to Notch", systemImage: "arrow.up.to.line", action: onSnap)
             Button("Close", systemImage: "xmark", action: onClose)
         }
