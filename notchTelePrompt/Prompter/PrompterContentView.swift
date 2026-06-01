@@ -116,7 +116,9 @@ private struct PrompterControlsView: View {
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.plain)
-        .foregroundStyle(.white.opacity(0.85))
+        .foregroundStyle(.white.opacity(0.9))
         .padding(8)
+        .background(.black.opacity(0.55), in: .rect(cornerRadius: 8))
+        .padding(6)
     }
 }
