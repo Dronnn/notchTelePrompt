@@ -24,6 +24,8 @@ struct FontSizeControlView: View {
 
             Text(viewModel.fontSize, format: .number.precision(.fractionLength(0)))
                 .monospacedDigit()
+                .accessibilityLabel("Font size")
+                .accessibilityValue(Text(viewModel.fontSize, format: .number.precision(.fractionLength(0))))
 
             Button("Larger text", systemImage: "textformat.size.larger") {
                 viewModel.increaseFontSize()

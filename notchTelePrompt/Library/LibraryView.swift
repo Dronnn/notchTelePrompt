@@ -47,6 +47,7 @@ struct LibraryView: View {
                     Text(order.title).tag(order)
                 }
             }
+            .accessibilityLabel("Sort scripts")
 
             Button("New Script", systemImage: "plus") {
                 do {

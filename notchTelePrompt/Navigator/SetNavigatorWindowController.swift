@@ -46,6 +46,12 @@ final class SetNavigatorWindowController: NSObject {
         self.panel = panel
 
         super.init()
+
+        observeScreenChanges()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     // MARK: - Presentation
@@ -103,9 +109,34 @@ final class SetNavigatorWindowController: NSObject {
             return
         }
         let visibleFrame = screen.visibleFrame
-        let size = panel.frame.size
+        // clamp to the visible frame so a resized navigator never strands off-screen
+        let size = CGSize(
+            width: min(panel.frame.width, visibleFrame.width),
+            height: min(panel.frame.height, visibleFrame.height)
+        )
         let x = visibleFrame.minX
-        let y = visibleFrame.midY - size.height / 2
+        let y = min(max(visibleFrame.midY - size.height / 2, visibleFrame.minY), visibleFrame.maxY - size.height)
         panel.setFrame(CGRect(x: x, y: y, width: size.width, height: size.height), display: true)
+    }
+
+    // MARK: - Screen Changes
+
+    /// reposition when displays change so the navigator never strands off-screen.
+    private func observeScreenChanges() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screenParametersDidChange(_:)),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    /// didChangeScreenParametersNotification posts on the main thread, matching this type's isolation.
+    @objc
+    private func screenParametersDidChange(_: Notification) {
+        guard isVisible else {
+            return
+        }
+        dockToLeftEdge()
     }
 }

@@ -16,6 +16,12 @@ final class PrompterViewModel {
     /// the scroll engine driving auto-scroll, offset and the playback state machine.
     let scrollEngine = ScrollEngine()
 
+    /// true only when a script with non-whitespace content is loaded
+    private var hasPlayableScript: Bool {
+        guard let currentScript else { return false }
+        return !currentScript.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// the chosen pre-start countdown (spec §17); applied on start / restart. driven by the preferences
     /// pane, so reading it during a view body also observes the shared store.
     var countdown: CountdownOption {
@@ -180,6 +186,8 @@ final class PrompterViewModel {
         case .paused:
             scrollEngine.resume()
         case .idle, .finished:
+            // block only the start transition; never freeze an already-running session.
+            guard hasPlayableScript else { return }
             scrollEngine.start(countdown: countdown)
         case .countdown:
             break
@@ -192,6 +200,7 @@ final class PrompterViewModel {
     }
 
     func restart() {
+        guard hasPlayableScript else { return }
         scrollEngine.restart(countdown: countdown)
     }
 
@@ -212,8 +221,8 @@ final class PrompterViewModel {
         if isVoiceModeEnabled {
             disableVoiceMode()
         } else {
-            // voice-follow needs a script to follow; without one, don't arm the microphone.
-            guard currentScript != nil else {
+            // voice-follow needs a non-empty script to follow; without one, don't arm the microphone.
+            guard hasPlayableScript else {
                 return
             }
             isVoiceModeEnabled = true
@@ -243,7 +252,7 @@ final class PrompterViewModel {
     /// when the pause-on-silence preference is off, a silence no longer pauses (only hover does), so the
     /// scroll keeps running once speech has started it.
     private func reconcileVoicePlayback() {
-        guard isVoiceModeEnabled, currentScript != nil else {
+        guard isVoiceModeEnabled, hasPlayableScript else {
             return
         }
         let shouldScroll = isSpeaking && !scrollEngine.isHovering

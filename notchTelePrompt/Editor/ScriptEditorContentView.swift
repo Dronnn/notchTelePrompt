@@ -67,10 +67,15 @@ struct ScriptEditorContentView: View {
 
             Button("Start Prompter", systemImage: "play.fill") {
                 if let script = viewModel.selectedScript {
+                    // flush the debounced autosave so the prompter starts with the current edited text.
+                    viewModel.saveImmediately()
                     onStartPrompter?(script)
                 }
             }
-            .disabled(viewModel.selectedScript == nil)
+            .disabled(
+                viewModel.selectedScript == nil
+                    || viewModel.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            )
             .keyboardShortcut("r", modifiers: .command)
         }
     }

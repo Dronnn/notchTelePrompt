@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// app-wide user preferences (spec §10), backed by UserDefaults. each property loads its value in init
 /// and writes through on didSet so SwiftUI panes can bind directly while changes persist immediately.
@@ -77,6 +78,7 @@ final class PreferencesStore {
     }
 
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let logger = Logger(subsystem: "com.notchTelePrompt", category: "preferences")
 
     // MARK: - Lifecycle
 
@@ -119,6 +121,8 @@ final class PreferencesStore {
 
     private func persistPrompterDefaults() {
         guard let data = try? JSONEncoder().encode(prompterDefaults) else {
+            // encoding prefs failed; in-memory value still valid
+            logger.warning("failed to encode prompter defaults; not persisted")
             return
         }
         defaults.set(data, forKey: Key.prompterDefaults)

@@ -50,7 +50,10 @@ struct MainView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                // keep the label hidden visually but expose it to voiceover
                 .labelsHidden()
+                .accessibilityLabel("Navigation section")
+                .accessibilityValue(section.title)
                 .padding()
 
                 switch section {

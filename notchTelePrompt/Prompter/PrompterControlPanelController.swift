@@ -49,6 +49,12 @@ final class PrompterControlPanelController: NSObject {
         hostingView.rootView = PrompterControlPanelView(viewModel: viewModel) { [weak self] in
             self?.onTogglePrompter?()
         }
+
+        observeScreenChanges()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     // MARK: - Presentation
@@ -84,5 +90,26 @@ final class PrompterControlPanelController: NSObject {
         let x = visibleFrame.midX - size.width / 2
         let y = visibleFrame.minY + Self.bottomMargin
         panel.setFrame(CGRect(x: x, y: y, width: size.width, height: size.height), display: true)
+    }
+
+    // MARK: - Screen Changes
+
+    /// reposition when displays change so the panel never strands off-screen.
+    private func observeScreenChanges() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screenParametersDidChange(_:)),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    /// didChangeScreenParametersNotification posts on the main thread, matching this type's isolation.
+    @objc
+    private func screenParametersDidChange(_: Notification) {
+        guard isVisible else {
+            return
+        }
+        positionNearBottom()
     }
 }

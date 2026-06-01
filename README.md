@@ -52,7 +52,9 @@ Implemented so far:
 
 - **Preferences** — a settings window with General (launch at login, show in the Dock, reopen the last prompter, open the editor on launch), Prompter (default text size, colour, alignment, background opacity, line spacing, scroll speed and countdown, plus quick presets), Voice (a single sensitivity slider, silence delay, pause-on-silence and the microphone status), Shortcuts (rebind every hotkey), and Privacy (a local-only statement, the screen-capture caveat, export all scripts, and clear local data). Appearance and voice settings take effect live, and everything persists across launches.
 
-Next up: error handling, accessibility and localization polish.
+- **Polish & accessibility** — empty-script and edge-case guards with clear on-screen feedback, display-change handling so the overlay, set navigator and mini control panel re-snap and never strand off-screen after a monitor is plugged or unplugged, a VoiceOver pass over the editor, library, prompter and preferences, and localization scaffolding (a String Catalog, English first and ready for translation).
+
+Next up: performance hardening, CI, and release polish.
 
 ## License
 

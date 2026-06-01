@@ -49,6 +49,10 @@ private struct PrompterBodyView: View {
             Text("No script selected.")
                 .foregroundStyle(viewModel.textColor)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if viewModel.currentScript?.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
+            Text("This script is empty.")
+                .foregroundStyle(viewModel.textColor)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             PrompterTextView(viewModel: viewModel)
         }

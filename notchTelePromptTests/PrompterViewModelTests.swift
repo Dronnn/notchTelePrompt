@@ -47,6 +47,20 @@ struct PrompterViewModelTests {
         #expect(viewModel.scrollEngine.state == .playing)
     }
 
+    @Test
+    func playPauseIgnoresEmptyScript() throws {
+        let container = try ModelContainerFactory.makeInMemory()
+        let store = ScriptStore(container: container)
+        let script = try store.create(title: "Empty", text: "   \n  ")
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let preferences = PreferencesStore(defaults: defaults)
+        preferences.countdown = .off
+        let viewModel = PrompterViewModel(store: store, preferences: preferences)
+        viewModel.currentScript = script
+        viewModel.playPause()
+        #expect(viewModel.scrollEngine.state == .idle)
+    }
+
     // MARK: - Countdown
 
     @Test
