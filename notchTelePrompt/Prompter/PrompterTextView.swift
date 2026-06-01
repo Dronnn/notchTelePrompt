@@ -58,18 +58,29 @@ private struct PrompterLineStackView: View {
 
     var body: some View {
         // a LazyVStack keeps only visible lines realized for long scripts (performance §38).
-        LazyVStack(alignment: .leading, spacing: PrompterStyle.lineSpacing) {
+        LazyVStack(alignment: viewModel.stackAlignment, spacing: viewModel.lineSpacing) {
             // iterate by index: EnumeratedSequence isn't a RandomAccessCollection before macOS 26.
             ForEach(viewModel.lines.indices, id: \.self) { index in
                 PrompterLineView(
                     text: viewModel.lines[index],
                     distance: index - viewModel.currentLineIndex,
-                    fontSize: CGFloat(viewModel.fontSize)
+                    fontSize: CGFloat(viewModel.fontSize),
+                    textColor: viewModel.textColor,
+                    textAlignment: viewModel.textAlignment
                 )
             }
         }
         .padding(.horizontal)
         .padding(.vertical, verticalPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: stackFrameAlignment)
+    }
+
+    /// keeps the padded stack pinned to the same edge as the lines.
+    private var stackFrameAlignment: Alignment {
+        switch viewModel.stackAlignment {
+        case .center: .center
+        case .trailing: .trailing
+        default: .leading
+        }
     }
 }

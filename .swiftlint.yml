@@ -153,7 +153,7 @@ custom_rules:
     name: "Lowercase Comment"
     # match `//` line comments that start with an uppercase letter,
     # excluding tooling directives and the allowed TODO / MARK / FIXME markers.
-    regex: '//[ \t]*(?!swiftlint:|periphery:|sourcery:|MARK|TODO|FIXME|Created|Copyright|notchTelePrompt|[A-Za-z0-9_]+\.swift)[A-Z]'
+    regex: '//[ \t]*(?!swiftlint:|periphery:|sourcery:|MARK|TODO|FIXME|Created|Copyright|notchTelePrompt|[A-Za-z0-9_+]+\.swift)[A-Z]'
     match_kinds:
       - comment
     message: "comments should start with a lowercase letter (only TODO and MARK stay uppercase)"

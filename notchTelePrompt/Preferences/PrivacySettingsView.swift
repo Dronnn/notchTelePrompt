@@ -18,7 +18,8 @@ struct PrivacySettingsView: View {
         Form {
             Section("Your data") {
                 Text(
-                    "Your scripts and any voice analysis stay on this Mac. Nothing is uploaded: there is no account and no analytics."
+                    "Your scripts and any voice analysis stay on this Mac. "
+                        + "Nothing is uploaded: there is no account and no analytics."
                 )
                 .foregroundStyle(.secondary)
             }

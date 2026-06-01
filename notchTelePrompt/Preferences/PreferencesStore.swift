@@ -37,7 +37,10 @@ final class PreferencesStore {
     // MARK: - Prompter
 
     var prompterDefaults = ScriptPrompterSettings() {
-        didSet { persistPrompterDefaults() }
+        didSet {
+            persistPrompterDefaults()
+            NotificationCenter.default.post(name: .preferencesPrompterDefaultsDidChange, object: nil)
+        }
     }
 
     var countdown: CountdownOption = .three {

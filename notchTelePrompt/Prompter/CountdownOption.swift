@@ -6,12 +6,18 @@
 //  Copyright © 2026 Andreas Maier. All rights reserved.
 //
 
+import Foundation
+
 /// pre-start countdown durations offered by the prompter (spec §17): off, 3, 5 or 10 seconds.
-nonisolated enum CountdownOption: CaseIterable {
+nonisolated enum CountdownOption: CaseIterable, Identifiable {
     case off
     case three
     case five
     case ten
+
+    var id: Self {
+        self
+    }
 
     /// whole seconds to count down, or nil when the countdown is off.
     var seconds: Int? {
@@ -24,6 +30,20 @@ nonisolated enum CountdownOption: CaseIterable {
             5
         case .ten:
             10
+        }
+    }
+
+    /// a short label for the preferences picker.
+    var title: String {
+        switch self {
+        case .off:
+            String(localized: "Off")
+        case .three:
+            String(localized: "3s")
+        case .five:
+            String(localized: "5s")
+        case .ten:
+            String(localized: "10s")
         }
     }
 

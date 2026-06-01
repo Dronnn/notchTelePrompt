@@ -6,7 +6,7 @@
 //  Copyright © 2026 Andreas Maier. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 /// holds the state the prompter overlay renders. owns the scroll engine that drives playback;
 /// the current reading line is derived from the engine's scroll offset (phase 7).
@@ -16,16 +16,20 @@ final class PrompterViewModel {
     /// the scroll engine driving auto-scroll, offset and the playback state machine.
     let scrollEngine = ScrollEngine()
 
-    /// the chosen pre-start countdown (spec §17); applied on start / restart.
-    var countdown: CountdownOption = .three
+    /// the chosen pre-start countdown (spec §17); applied on start / restart. driven by the preferences
+    /// pane, so reading it during a view body also observes the shared store.
+    var countdown: CountdownOption {
+        preferences.countdown
+    }
 
-    /// the script being shown. setting it resets the engine to the top and refreshes the font size
-    /// mirror from the script's stored settings.
+    /// the script being shown. setting it resets the engine to the top, refreshes the font size mirror
+    /// from the script's stored settings and re-seeds the scroll speed from the current global default.
     var currentScript: Script? {
         didSet {
             scrollEngine.stop()
             reloadFontSize()
             syncEngineGeometry()
+            seedScrollSpeed()
             reconcileVoicePlayback()
         }
     }
@@ -49,9 +53,40 @@ final class PrompterViewModel {
         scrollEngine.progress
     }
 
-    /// vertical spacing between rendered lines (fixed default for v1.0).
+    // MARK: - Resolved appearance
+
+    /// the text colour resolved from the global prompter defaults (falling back to white). reading this
+    /// in a view body observes the shared store, so a colour change in the pane updates the overlay live.
+    var textColor: Color {
+        Color(hex: preferences.prompterDefaults.textColorHex) ?? .white
+    }
+
+    /// the overlay background opacity from the global prompter defaults; live for the same reason.
+    var backgroundOpacity: Double {
+        preferences.prompterDefaults.backgroundOpacity
+    }
+
+    /// the text's multiline alignment derived from the global alignment default.
+    var textAlignment: TextAlignment {
+        switch preferences.prompterDefaults.alignment {
+        case .left: .leading
+        case .center: .center
+        case .right: .trailing
+        }
+    }
+
+    /// the line stack's horizontal alignment derived from the global alignment default.
+    var stackAlignment: HorizontalAlignment {
+        switch preferences.prompterDefaults.alignment {
+        case .left: .leading
+        case .center: .center
+        case .right: .trailing
+        }
+    }
+
+    /// vertical spacing between rendered lines, resolved from the global prompter defaults.
     var lineSpacing: Double {
-        Double(PrompterStyle.lineSpacing)
+        preferences.prompterDefaults.lineSpacing
     }
 
     /// the script text split into renderable lines. memoized so it resplits only when the text
@@ -91,14 +126,16 @@ final class PrompterViewModel {
     @ObservationIgnored private let preferences: PreferencesStore
     @ObservationIgnored private var fontSizeObserver: NotificationObserverToken?
     @ObservationIgnored private var voiceConfigObserver: NotificationObserverToken?
+    @ObservationIgnored private var prompterDefaultsObserver: NotificationObserverToken?
 
     init(store: ScriptStore? = nil, preferences: PreferencesStore = PreferencesStore()) {
         self.store = store
         self.preferences = preferences
         observeFontSizeChanges()
         observeVoiceConfigChanges()
+        observePrompterDefaultsChanges()
         syncEngineGeometry()
-        scrollEngine.setSpeed(.default(fontSize: fontSize, lineSpacing: lineSpacing))
+        seedScrollSpeed()
 
         voiceEngine.onSpeakingChanged = { [weak self] speaking in
             guard let self else {
@@ -247,6 +284,13 @@ final class PrompterViewModel {
         scrollEngine.setSpeed(speed)
     }
 
+    /// seeds the engine speed from the global default reading rate for the current geometry. applied on
+    /// init, when the shown script changes and when the defaults change, so per-session tweaks via
+    /// increaseSpeed/decreaseSpeed still take effect between re-seeds.
+    private func seedScrollSpeed() {
+        applyWordsPerMinute(preferences.prompterDefaults.scrollSpeed)
+    }
+
     // MARK: - Font size
 
     func increaseFontSize() {
@@ -276,9 +320,11 @@ final class PrompterViewModel {
         )
     }
 
-    /// refreshes the mirror from the current script's stored settings, defaulting when none exist.
+    /// refreshes the mirror from the current script's stored settings, falling back to the global default
+    /// font size when the script has none stored.
     private func reloadFontSize() {
-        fontSize = PrompterFontSize.clamp(currentScript?.settingsBlob?.fontSize ?? PrompterFontSize.default)
+        let fallback = preferences.prompterDefaults.fontSize
+        fontSize = PrompterFontSize.clamp(currentScript?.settingsBlob?.fontSize ?? fallback)
         syncEngineGeometry()
     }
 
@@ -326,6 +372,25 @@ final class PrompterViewModel {
                     return
                 }
                 self.voiceEngine.updateConfiguration(self.preferences.voiceConfiguration)
+            }
+        })
+    }
+
+    /// re-seeds the scroll speed and recomputes the line-spacing-driven geometry when the global prompter
+    /// defaults change, so an open overlay updates live. colour, opacity and alignment update on their own
+    /// because the views read those accessors (which read the @Observable store) inside their body.
+    private func observePrompterDefaultsChanges() {
+        prompterDefaultsObserver = NotificationObserverToken(NotificationCenter.default.addObserver(
+            forName: .preferencesPrompterDefaultsDidChange,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else {
+                    return
+                }
+                self.syncEngineGeometry()
+                self.seedScrollSpeed()
             }
         })
     }

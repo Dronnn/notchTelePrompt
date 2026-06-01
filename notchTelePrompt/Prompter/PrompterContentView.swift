@@ -19,7 +19,7 @@ struct PrompterContentView: View {
 
     var body: some View {
         PrompterBodyView(viewModel: viewModel)
-            .background(.black.opacity(0.82))
+            .background(.black.opacity(viewModel.backgroundOpacity))
             .overlay {
                 if viewModel.scrollEngine.state == .countdown {
                     PrompterCountdownOverlay(secondsRemaining: viewModel.scrollEngine.countdownRemaining)
@@ -55,7 +55,7 @@ private struct PrompterBodyView: View {
     var body: some View {
         if viewModel.currentScript == nil {
             Text("No script selected.")
-                .foregroundStyle(.white)
+                .foregroundStyle(viewModel.textColor)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             PrompterTextView(viewModel: viewModel)

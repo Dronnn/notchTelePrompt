@@ -14,28 +14,31 @@ import Testing
 @MainActor
 struct PrompterViewModelTests {
     /// builds a fresh in-memory store with a single script for each test so cases stay isolated.
-    private func makeViewModelWithScript() throws -> (PrompterViewModel, Script) {
+    /// countdown is driven through an isolated PreferencesStore, since the view model now reads it there.
+    private func makeViewModelWithScript() throws -> (PrompterViewModel, Script, PreferencesStore) {
         let container = try ModelContainerFactory.makeInMemory()
         let store = ScriptStore(container: container)
         let script = try store.create(title: "T", text: "line one\nline two\nline three")
-        let viewModel = PrompterViewModel(store: store)
-        viewModel.countdown = .off
+        let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+        let preferences = PreferencesStore(defaults: defaults)
+        preferences.countdown = .off
+        let viewModel = PrompterViewModel(store: store, preferences: preferences)
         viewModel.currentScript = script
-        return (viewModel, script)
+        return (viewModel, script, preferences)
     }
 
     // MARK: - Play / pause
 
     @Test
     func playPauseFromIdleStartsPlayingWhenCountdownOff() throws {
-        let (viewModel, _) = try makeViewModelWithScript()
+        let (viewModel, _, _) = try makeViewModelWithScript()
         viewModel.playPause()
         #expect(viewModel.scrollEngine.state == .playing)
     }
 
     @Test
     func playPauseTogglesPauseThenResume() throws {
-        let (viewModel, _) = try makeViewModelWithScript()
+        let (viewModel, _, _) = try makeViewModelWithScript()
         viewModel.playPause()
         #expect(viewModel.scrollEngine.state == .playing)
         viewModel.playPause()
@@ -48,16 +51,16 @@ struct PrompterViewModelTests {
 
     @Test
     func playPauseFromIdleEntersCountdownWhenConfigured() throws {
-        let (viewModel, _) = try makeViewModelWithScript()
-        viewModel.countdown = .three
+        let (viewModel, _, preferences) = try makeViewModelWithScript()
+        preferences.countdown = .three
         viewModel.playPause()
         #expect(viewModel.scrollEngine.state == .countdown)
     }
 
     @Test
     func playPauseIsNoOpDuringCountdown() throws {
-        let (viewModel, _) = try makeViewModelWithScript()
-        viewModel.countdown = .three
+        let (viewModel, _, preferences) = try makeViewModelWithScript()
+        preferences.countdown = .three
         viewModel.playPause()
         #expect(viewModel.scrollEngine.state == .countdown)
         viewModel.playPause()
@@ -68,7 +71,7 @@ struct PrompterViewModelTests {
 
     @Test
     func stopReturnsToIdleAndTop() throws {
-        let (viewModel, _) = try makeViewModelWithScript()
+        let (viewModel, _, _) = try makeViewModelWithScript()
         viewModel.playPause()
         #expect(viewModel.scrollEngine.state == .playing)
         viewModel.stop()
