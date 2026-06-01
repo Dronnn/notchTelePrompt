@@ -35,10 +35,18 @@ final class PrompterWindowController: NSObject {
             onClose: {},
             onSnap: {}
         ))
-        // don't let SwiftUI's intrinsic sizing drive the window's content min/max size; the panel's own
-        // minSize and free user resizing should govern, so clear the default .standardBounds options.
+        // clear the default sizing options so SwiftUI's intrinsic size never feeds the window.
         hostingView.sizingOptions = []
-        let panel = PrompterPanel(contentView: hostingView)
+        // host the SwiftUI view inside a plain container that is the panel's content view, filling it via
+        // autoresizing. as a *direct* content view, NSHostingView sized the panel to the script's full
+        // rendered height and looped AppKit's constraint passes until it threw; behind a container the
+        // window size is owned only by snap-to-notch and user resizing, never by the content.
+        let container = NSView(frame: NSRect(origin: .zero, size: Self.defaultPanelSize))
+        hostingView.translatesAutoresizingMaskIntoConstraints = true
+        hostingView.autoresizingMask = [.width, .height]
+        hostingView.frame = container.bounds
+        container.addSubview(hostingView)
+        let panel = PrompterPanel(contentView: container)
         panel.setContentSize(Self.defaultPanelSize)
         // let the user drag the overlay anywhere on its background; never makes the panel key.
         panel.isMovableByWindowBackground = true
