@@ -8,30 +8,16 @@
 
 import SwiftUI
 
-/// prompter rendering: the current script text on a translucent dark background, with a subtle progress
-/// bar and the countdown / voice overlays. the top-right control row is not here: it lives in a separate
-/// top-most hosting view (see PrompterControlsView) so it can never be hidden by the scroll-catcher's
-/// native subview inside the text view.
+/// prompter rendering: the current script text on a translucent dark background. the non-interactive chrome
+/// (countdown, progress bar, voice indicator) and the top-right control row are not here — they live in
+/// separate hosting views above this one (see PrompterChromeView and PrompterControlsView), because the
+/// scroll-catcher's native subview inside the text view composites above any sibling overlay in this host.
 struct PrompterContentView: View {
     let viewModel: PrompterViewModel
 
     var body: some View {
         PrompterBodyView(viewModel: viewModel)
             .background(.black.opacity(viewModel.backgroundOpacity))
-            .overlay {
-                if viewModel.scrollEngine.state == .countdown {
-                    PrompterCountdownOverlay(secondsRemaining: viewModel.scrollEngine.countdownRemaining)
-                }
-            }
-            .overlay(alignment: .bottom) {
-                PrompterProgressBar(progress: viewModel.progress)
-            }
-            .overlay(alignment: .topLeading) {
-                if viewModel.isVoiceModeEnabled {
-                    PrompterVoiceIndicatorView(isSpeaking: viewModel.isSpeaking)
-                        .padding(8)
-                }
-            }
             .clipShape(.rect(cornerRadius: 8))
             .onHover { hovering in
                 viewModel.setHovering(hovering)

@@ -90,6 +90,12 @@ final class PrompterWindowController: NSObject {
         let hostingView = Self.makeHostingView(PrompterContentView(viewModel: viewModel), frame: container.bounds)
         container.addSubview(hostingView)
 
+        // the non-interactive chrome (countdown, progress bar, voice indicator) sits in its own host above
+        // the text body, so the scroll-catcher's native subview can't hide it; hit-testing is off in the
+        // chrome's swiftui content, so scroll and clicks pass straight through to the text body beneath.
+        let chromeHost = Self.makeHostingView(PrompterChromeView(viewModel: viewModel), frame: container.bounds)
+        container.addSubview(chromeHost)
+
         let panel = PrompterPanel(contentView: container)
         panel.setContentSize(Self.defaultPanelSize)
         // let the user drag the overlay anywhere on its background; never makes the panel key.
