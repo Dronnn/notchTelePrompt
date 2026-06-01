@@ -372,6 +372,8 @@ final class PrompterViewModel {
                     return
                 }
                 self.voiceEngine.updateConfiguration(self.preferences.voiceConfiguration)
+                // settle playback so a pause-on-silence change takes effect while already silent.
+                self.reconcileVoicePlayback()
             }
         })
     }
@@ -389,7 +391,9 @@ final class PrompterViewModel {
                 guard let self else {
                     return
                 }
-                self.syncEngineGeometry()
+                // refresh the font-size mirror first so a global font-default change updates an open
+                // script that has no per-script size; reloadFontSize already keeps geometry in step.
+                self.reloadFontSize()
                 self.seedScrollSpeed()
             }
         })

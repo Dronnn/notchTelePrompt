@@ -64,7 +64,11 @@ final class PreferencesStore {
     }
 
     var pauseOnSilence = true {
-        didSet { defaults.set(pauseOnSilence, forKey: Key.pauseOnSilence) }
+        didSet {
+            defaults.set(pauseOnSilence, forKey: Key.pauseOnSilence)
+            // re-settle live playback: toggling this while already silent must pause/resume immediately.
+            NotificationCenter.default.post(name: .preferencesVoiceConfigDidChange, object: nil)
+        }
     }
 
     /// the detector configuration derived from the current voice preferences.

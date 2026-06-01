@@ -52,6 +52,10 @@ struct VoiceSettingsView: View {
         .onAppear {
             authorization = .current
         }
+        // also refresh on reactivation, e.g. returning from System Settings after granting access.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            authorization = .current
+        }
     }
 }
 

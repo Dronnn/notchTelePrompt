@@ -21,7 +21,9 @@ struct GeneralSettingsView: View {
                 Toggle("Launch NotchPrompter at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
                         LaunchAtLogin.setEnabled(newValue)
-                        // re-sync to the real status: registration can require approval or fail.
+                        // re-sync to the real status: registration can require approval or fail. isEnabled
+                        // treats .requiresApproval as on, so a pending-approval registration stays on and
+                        // resyncs to the same value the user set, firing no reverse onChange.
                         launchAtLogin = LaunchAtLogin.isEnabled
                     }
 

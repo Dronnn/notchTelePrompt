@@ -15,8 +15,12 @@ import ServiceManagement
 enum LaunchAtLogin {
     private static let logger = Logger(subsystem: "com.notchTelePrompt", category: "LaunchAtLogin")
 
+    /// treats a pending-approval registration as on: register() can yield .requiresApproval while the user
+    /// resolves it in System Settings, and reporting that as off would flip the toggle back and unregister
+    /// the item we just registered.
     static var isEnabled: Bool {
-        SMAppService.mainApp.status == .enabled
+        let status = SMAppService.mainApp.status
+        return status == .enabled || status == .requiresApproval
     }
 
     /// registers or unregisters the login item. on failure (including pending approval) it sends the

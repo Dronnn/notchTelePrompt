@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var prompterController: PrompterWindowController?
     private var setNavigatorController: SetNavigatorWindowController?
     private var libraryViewModel: LibraryViewModel?
+    private var setsViewModel: SetsViewModel?
     private let shortcuts = ShortcutsController()
     private lazy var preferences = PreferencesWindowController(
         preferencesStore: environment.preferencesStore,
@@ -32,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let importExportVM = ImportExportViewModel(store: environment.scriptStore, libraryViewModel: library)
         importExportViewModel = importExportVM
         let setsVM = SetsViewModel(promptSetStore: environment.promptSetStore, scriptStore: environment.scriptStore)
+        setsViewModel = setsVM
 
         let windowController = MainWindowController(
             environment: environment,
@@ -247,7 +249,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// shows a destructive confirmation, then deletes all scripts and prompt sets and resets dependent
-    /// state. best-effort: a store failure is swallowed so a partial clear never crashes the app.
+    /// state. on a delete failure it stays honest: a brief alert is shown and dependent state is left
+    /// untouched, so a partial clear never crashes the app nor falsely claims success.
     private func confirmAndClearLocalData() {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
@@ -260,12 +263,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
         }
-        try? environment.scriptStore.deleteAll()
-        try? environment.promptSetStore.deleteAll()
+        do {
+            // attempt both deletions; a throw from either aborts the success-only reset below.
+            try environment.scriptStore.deleteAll()
+            try environment.promptSetStore.deleteAll()
+        } catch {
+            presentClearDataFailedAlert()
+            return
+        }
+        // deletions succeeded: reset every surface that may still reference a now-deleted model.
         environment.preferencesStore.lastShownScriptID = nil
         prompterController?.forgetAll()
+        // the library selection may still point at a deleted script; clear it before refreshing.
+        libraryViewModel?.selectedScript = nil
         libraryViewModel?.refresh()
+        setsViewModel?.refreshSets()
         setNavigatorController?.refresh()
+    }
+
+    /// surfaces a failure during clear-local-data without crashing or claiming success.
+    private func presentClearDataFailedAlert() {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Couldn't clear all data")
+        alert.informativeText = String(localized: "Some data couldn't be deleted. Please try again.")
+        alert.runModal()
     }
 
     /// surfaces a failure during export-all without crashing; the underlying message comes from the view model.

@@ -86,8 +86,14 @@ final class ImportExportViewModel {
     /// de-duplicated on collision; line breaks are preserved by writing the stored text verbatim.
     /// no-op when there are no scripts; surfaces a single error message on failure.
     func exportAllScripts(to directory: URL) async {
+        // clear any prior unrelated error so a stale message can't surface as a false export-all failure.
+        errorMessage = nil
         isExporting = true
         defer { isExporting = false }
+        // balance sandbox access for the panel-vended directory around the write loop. a false return
+        // is fine: the panel grants implicit access, so we still attempt and just skip the stop.
+        let scoped = directory.startAccessingSecurityScopedResource()
+        defer { if scoped { directory.stopAccessingSecurityScopedResource() } }
         do {
             let scripts = try store.fetchAll()
             guard !scripts.isEmpty else {
@@ -97,7 +103,7 @@ final class ImportExportViewModel {
             // model-backed crosses into the detached write.
             var usedNames: Set<String> = []
             let files: [(name: String, data: Data)] = scripts.map { script in
-                let name = Self.uniqueFileName(for: script.title, usedNames: &usedNames)
+                let name = Self.uniqueFileName(for: script.title, in: directory, usedNames: &usedNames)
                 return (name, ScriptTextCore.fileData(for: script.text, format: .txt))
             }
             try await Task.detached {
@@ -172,8 +178,14 @@ final class ImportExportViewModel {
     }
 
     /// builds a filesystem-safe ".txt" filename from a title, falling back to "Untitled", and appends a
-    /// " 2", " 3" suffix when a base name has already been used so export-all never overwrites a file.
-    private static func uniqueFileName(for title: String, usedNames: inout Set<String>) -> String {
+    /// " 2", " 3" suffix when a base name collides so export-all never overwrites a file. collisions are
+    /// matched case-insensitively (APFS is case-insensitive by default) against both names already used
+    /// in this run and files already present in the destination directory.
+    private static func uniqueFileName(
+        for title: String,
+        in directory: URL,
+        usedNames: inout Set<String>
+    ) -> String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let illegal = CharacterSet(charactersIn: "/\\:")
         let sanitized = trimmed
@@ -184,11 +196,14 @@ final class ImportExportViewModel {
 
         var candidate = base
         var index = 2
-        while usedNames.contains(candidate) {
+        while
+            usedNames.contains(candidate.lowercased())
+            || FileManager.default.fileExists(atPath: directory.appending(path: "\(candidate).txt").path)
+        {
             candidate = "\(base) \(index)"
             index += 1
         }
-        usedNames.insert(candidate)
+        usedNames.insert(candidate.lowercased())
         return "\(candidate).txt"
     }
 }
