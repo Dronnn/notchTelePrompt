@@ -40,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController.onStartPrompter = { [weak self] script in self?.showPrompter(script) }
 
         prompterController = PrompterWindowController(store: environment.scriptStore)
+        prompterController?.onVoicePermissionDenied = { [weak self] in self?.presentMicrophoneDeniedAlert() }
+        prompterController?.onVoiceUnavailable = { [weak self] in self?.presentMicrophoneUnavailableAlert() }
 
         let navigator = SetNavigatorWindowController(
             promptSetStore: environment.promptSetStore,
@@ -71,6 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.onStartPause = { [weak self] in self?.startPausePrompter() }
         menuBar.onRestart = { [weak self] in self?.restartPrompter() }
         menuBar.onStop = { [weak self] in self?.prompterController?.stop() }
+        menuBar.onToggleVoice = { [weak self] in self?.prompterController?.toggleVoiceMode() }
+        menuBar.isVoiceEnabled = { [weak self] in self?.prompterController?.isVoiceModeEnabled ?? false }
         menuBar.isPrompterPlaying = { [weak self] in self?.prompterController?.isPlaying ?? false }
         menuBar.onToggleControlPanel = { [weak self] in self?.prompterController?.toggleControlPanel() }
         menuBar.isControlPanelVisible = { [weak self] in self?.prompterController?.isControlPanelVisible ?? false }
@@ -154,6 +158,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showPreferences() {
         preferences.show()
+    }
+
+    /// guides the user to enable microphone access when voice-follow was denied (spec §9.1).
+    private func presentMicrophoneDeniedAlert() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Microphone access is off")
+        alert.informativeText = String(
+            localized: "Voice-follow needs microphone access. Open System Settings to turn it on, then try again."
+        )
+        alert.addButton(withTitle: String(localized: "Open System Settings"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            return
+        }
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// lets the user know voice-follow couldn't start the microphone even though access is allowed
+    /// (no input device, or the mic is in use by another app).
+    private func presentMicrophoneUnavailableAlert() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Microphone is unavailable")
+        alert.informativeText = String(
+            localized: "NotchPrompter couldn't start the microphone. It may be in use by another app."
+        )
+        alert.runModal()
     }
 
     /// installs the global hotkey handlers, forwarding each to the matching app action.

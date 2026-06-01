@@ -14,8 +14,8 @@ import SwiftUI
 /// screen, and forwards the hide-prompter action to the host via onHidePrompter.
 @MainActor
 final class PrompterControlPanelController: NSObject {
-    /// the control row's fixed size; wide enough for the five icon buttons in a single line.
-    private static let panelSize = CGSize(width: 252, height: 48)
+    /// the control row's fixed size; wide enough for the six icon buttons in a single line.
+    private static let panelSize = CGSize(width: 304, height: 48)
 
     /// gap between the panel's bottom edge and the visible frame's bottom edge.
     private static let bottomMargin: CGFloat = 24

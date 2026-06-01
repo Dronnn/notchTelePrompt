@@ -22,6 +22,13 @@ struct PrompterControlPanelView: View {
         viewModel.currentScript != nil
     }
 
+    private var voiceSymbol: String {
+        guard viewModel.isVoiceModeEnabled else {
+            return "mic.slash"
+        }
+        return viewModel.isSpeaking ? "mic.fill" : "mic"
+    }
+
     var body: some View {
         HStack {
             Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
@@ -40,6 +47,12 @@ struct PrompterControlPanelView: View {
                 viewModel.increaseSpeed()
             }
             .disabled(!hasScript)
+            Button(
+                viewModel.isVoiceModeEnabled ? "Voice on" : "Voice off",
+                systemImage: voiceSymbol
+            ) {
+                viewModel.toggleVoiceMode()
+            }
             Button("Hide Prompter", systemImage: "eye.slash", action: onHidePrompter)
         }
         .labelStyle(.iconOnly)

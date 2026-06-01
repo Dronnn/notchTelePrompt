@@ -48,7 +48,9 @@ Implemented so far:
 
 - **Menu-bar controls & global hotkeys** — run the prompter from the menu bar (start/pause, restart, stop, open recent, snap to notch, mini controls) or from rebindable global hotkeys that work even when another app has focus — show/hide, start/pause, restart, and speed up/down — plus optional next/previous-script and open-editor bindings. Rebind everything in a Shortcuts preferences pane. An optional floating mini control panel mirrors the playback buttons, and in-app shortcuts cover Start Prompter and text size.
 
-Next up: on-device voice-activity mode — scroll while you speak, pause on silence.
+- **Voice-follow (on-device)** — turn on voice mode and the prompter scrolls while you speak and pauses when you stop, using on-device voice-activity detection (energy with hysteresis and a short silence delay). Nothing is recorded or sent anywhere, and the microphone is accessed only after you enable it. A subtle mic indicator shows it is listening and brightens when it hears you.
+
+Next up: a preferences window (general, prompter, voice sensitivity, shortcuts, privacy).
 
 ## License
 

@@ -33,6 +33,12 @@ struct PrompterContentView: View {
                     .opacity(isHovering ? 1 : 0)
                     .animation(.easeInOut(duration: 0.15), value: isHovering)
             }
+            .overlay(alignment: .topLeading) {
+                if viewModel.isVoiceModeEnabled {
+                    PrompterVoiceIndicatorView(isSpeaking: viewModel.isSpeaking)
+                        .padding(8)
+                }
+            }
             .clipShape(.rect(cornerRadius: 8))
             .onHover { hovering in
                 isHovering = hovering

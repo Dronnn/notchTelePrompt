@@ -67,6 +67,22 @@ final class PrompterViewModel {
     @ObservationIgnored private var cachedText: String?
     @ObservationIgnored private var cachedLines: [String] = []
 
+    /// whether voice-follow is currently engaged (the user's intent); the indicator shows while true.
+    private(set) var isVoiceModeEnabled = false
+
+    /// mirrors the voice engine's speaking state for the overlay indicator (observed for SwiftUI).
+    private(set) var isSpeaking = false
+
+    /// fired when enabling voice fails because microphone permission is denied or restricted, so the
+    /// host can guide the user to System Settings (spec §9.1).
+    @ObservationIgnored var onVoicePermissionDenied: (() -> Void)?
+
+    /// fired when capture can't start despite permission (no input device, mic busy, engine failure),
+    /// so the host can let the user know voice-follow didn't actually begin.
+    @ObservationIgnored var onVoiceUnavailable: (() -> Void)?
+
+    @ObservationIgnored private let voiceEngine = VoiceEngine()
+
     /// persists font-size changes; injected so the overlay writes through the same store as the editor.
     @ObservationIgnored private let store: ScriptStore?
     @ObservationIgnored private var fontSizeObserver: NotificationObserverToken?
@@ -76,6 +92,30 @@ final class PrompterViewModel {
         observeFontSizeChanges()
         syncEngineGeometry()
         scrollEngine.setSpeed(.default(fontSize: fontSize, lineSpacing: lineSpacing))
+
+        voiceEngine.onSpeakingChanged = { [weak self] speaking in
+            guard let self else {
+                return
+            }
+            isSpeaking = speaking
+            handleVoiceSpeaking(speaking)
+        }
+        voiceEngine.onPermissionDenied = { [weak self] in
+            guard let self else {
+                return
+            }
+            isVoiceModeEnabled = false
+            isSpeaking = false
+            onVoicePermissionDenied?()
+        }
+        voiceEngine.onUnavailable = { [weak self] in
+            guard let self else {
+                return
+            }
+            isVoiceModeEnabled = false
+            isSpeaking = false
+            onVoiceUnavailable?()
+        }
     }
 
     // MARK: - Playback
@@ -112,6 +152,53 @@ final class PrompterViewModel {
     /// the viewport height measured by the view; feeds the engine so max offset / progress are right.
     func setViewportHeight(_ height: Double) {
         scrollEngine.viewportHeight = height
+    }
+
+    // MARK: - Voice
+
+    /// toggles voice-follow on/off. enabling requests microphone permission on first use.
+    func toggleVoiceMode() {
+        if isVoiceModeEnabled {
+            disableVoiceMode()
+        } else {
+            isVoiceModeEnabled = true
+            voiceEngine.enable()
+        }
+    }
+
+    /// turns voice-follow fully off and releases the microphone; called both by the toggle and whenever
+    /// the overlay is dismissed, so the mic never keeps capturing once the prompter is hidden.
+    func disableVoiceMode() {
+        guard isVoiceModeEnabled else {
+            return
+        }
+        isVoiceModeEnabled = false
+        isSpeaking = false
+        voiceEngine.disable()
+    }
+
+    /// drives the scroll engine from speech: speaking resumes/starts (no countdown — speech is the cue),
+    /// silence pauses. only acts in voice mode with a loaded script.
+    private func handleVoiceSpeaking(_ speaking: Bool) {
+        guard isVoiceModeEnabled, currentScript != nil else {
+            return
+        }
+        if speaking {
+            // explicit hover-to-pause wins over voice: don't resume while the pointer holds it still.
+            guard !scrollEngine.isHovering else {
+                return
+            }
+            switch scrollEngine.state {
+            case .idle:
+                scrollEngine.start(countdown: .off)
+            case .paused:
+                scrollEngine.resume()
+            case .playing, .countdown, .finished:
+                break
+            }
+        } else if scrollEngine.state == .playing {
+            scrollEngine.pause()
+        }
     }
 
     // MARK: - Speed

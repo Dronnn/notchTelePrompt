@@ -72,6 +72,9 @@ final class PrompterWindowController: NSObject {
     }
 
     func hide() {
+        // releasing the mic here covers forgetScript too (it routes through hide), so voice-follow never
+        // keeps capturing once the overlay is gone and its on-screen mic indicator disappears.
+        viewModel.disableVoiceMode()
         panel.orderOut(nil)
         visibilityStore.setVisible(false)
     }
@@ -133,6 +136,28 @@ final class PrompterWindowController: NSObject {
             return
         }
         viewModel.decreaseSpeed()
+    }
+
+    // MARK: - Voice
+
+    var isVoiceModeEnabled: Bool {
+        viewModel.isVoiceModeEnabled
+    }
+
+    func toggleVoiceMode() {
+        viewModel.toggleVoiceMode()
+    }
+
+    /// forwards the view model's microphone-denied callback so the app delegate can show guidance.
+    var onVoicePermissionDenied: (() -> Void)? {
+        get { viewModel.onVoicePermissionDenied }
+        set { viewModel.onVoicePermissionDenied = newValue }
+    }
+
+    /// forwards the view model's mic-unavailable callback so the app delegate can let the user know.
+    var onVoiceUnavailable: (() -> Void)? {
+        get { viewModel.onVoiceUnavailable }
+        set { viewModel.onVoiceUnavailable = newValue }
     }
 
     // MARK: - Mini control panel

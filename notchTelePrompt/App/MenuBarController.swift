@@ -25,6 +25,8 @@ final class MenuBarController: NSObject {
     var onStartPause: (() -> Void)?
     var onRestart: (() -> Void)?
     var onStop: (() -> Void)?
+    var onToggleVoice: (() -> Void)?
+    var isVoiceEnabled: (() -> Bool)?
     var onToggleControlPanel: (() -> Void)?
     var onOpenPreferences: (() -> Void)?
     var onShowScript: ((Script) -> Void)?
@@ -45,6 +47,7 @@ final class MenuBarController: NSObject {
     /// kept so the title can be flipped between "Show Set Navigator" and "Hide Set Navigator".
     private var showNavigatorItem: NSMenuItem?
     private var startPauseItem: NSMenuItem?
+    private var voiceItem: NSMenuItem?
     private var recentMenuItem: NSMenuItem?
     private var showControlPanelItem: NSMenuItem?
 
@@ -134,6 +137,9 @@ final class MenuBarController: NSObject {
         restartItem.setShortcut(for: .restartPrompter)
         menu.addItem(restartItem)
         menu.addItem(menuItem(title: String(localized: "Stop"), action: #selector(stop)))
+        let voiceItem = menuItem(title: String(localized: "Start Voice Follow"), action: #selector(toggleVoice))
+        self.voiceItem = voiceItem
+        menu.addItem(voiceItem)
         let recentItem = NSMenuItem(title: String(localized: "Open Recent"), action: nil, keyEquivalent: "")
         recentItem.submenu = NSMenu()
         recentMenuItem = recentItem
@@ -215,6 +221,11 @@ final class MenuBarController: NSObject {
     }
 
     @objc
+    private func toggleVoice() {
+        onToggleVoice?()
+    }
+
+    @objc
     private func toggleControlPanel() {
         onToggleControlPanel?()
     }
@@ -265,6 +276,9 @@ extension MenuBarController: NSMenuDelegate {
         startPauseItem?.title = (isPrompterPlaying?() ?? false)
             ? String(localized: "Pause")
             : String(localized: "Start")
+        voiceItem?.title = (isVoiceEnabled?() ?? false)
+            ? String(localized: "Stop Voice Follow")
+            : String(localized: "Start Voice Follow")
         showControlPanelItem?.title = (isControlPanelVisible?() ?? false)
             ? String(localized: "Hide Mini Controls")
             : String(localized: "Show Mini Controls")

@@ -84,7 +84,7 @@ final class ScrollEngine {
     private var ticker: Task<Void, Never>?
 
     /// whether the pointer is currently over the prompter.
-    private var isHovering = false
+    private(set) var isHovering = false
 
     /// whether playback was active when the current hover began (so we only auto-resume real playback).
     private var wasPlayingBeforeHover = false
