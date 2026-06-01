@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.onStartPause = { [weak self] in self?.startPausePrompter() }
         menuBar.onRestart = { [weak self] in self?.restartPrompter() }
         menuBar.onStop = { [weak self] in self?.prompterController?.stop() }
-        menuBar.onToggleVoice = { [weak self] in self?.prompterController?.toggleVoiceMode() }
+        menuBar.onToggleVoice = { [weak self] in self?.toggleVoiceFollow() }
         menuBar.isVoiceEnabled = { [weak self] in self?.prompterController?.isVoiceModeEnabled ?? false }
         menuBar.isPrompterPlaying = { [weak self] in self?.prompterController?.isPlaying ?? false }
         menuBar.onToggleControlPanel = { [weak self] in self?.prompterController?.toggleControlPanel() }
@@ -150,6 +150,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         prompterController?.restart()
+    }
+
+    /// menu toggle for voice-follow; enabling first ensures a prompter is showing so the mic indicator is
+    /// visible and there is a script to follow (mirrors start/restart). disabling just turns it off.
+    private func toggleVoiceFollow() {
+        guard let prompter = prompterController else {
+            return
+        }
+        if prompter.isVoiceModeEnabled {
+            prompter.toggleVoiceMode()
+        } else {
+            guard ensurePrompterShowing() else {
+                return
+            }
+            prompter.toggleVoiceMode()
+        }
     }
 
     private func recentScriptsForMenu() -> [Script] {

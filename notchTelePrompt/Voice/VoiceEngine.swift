@@ -32,9 +32,13 @@ final class VoiceEngine {
     @ObservationIgnored private var isTapInstalled = false
     /// the user's desired run state; a toggle-off during the permission prompt cancels the pending start.
     @ObservationIgnored private var wantsRunning = false
+    /// bumped on every stop so speech samples queued from a previous capture session are ignored.
+    @ObservationIgnored private var captureGeneration = 0
+    @ObservationIgnored private var configObserver: NotificationObserverToken?
 
     init() {
         authorizationStatus = Self.currentAuthorization()
+        observeConfigurationChanges()
     }
 
     // MARK: - Control
@@ -60,6 +64,33 @@ final class VoiceEngine {
         stop()
     }
 
+    // MARK: - Hardware changes
+
+    /// the audio engine stops and uninitializes when the input device or its format changes (e.g. the user
+    /// plugs in headphones). rebuild the tap on the new device so voice-follow keeps working, surfacing
+    /// unavailable only if the new device can't be used.
+    private func observeConfigurationChanges() {
+        configObserver = NotificationObserverToken(NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: engine,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.handleConfigurationChange()
+            }
+        })
+    }
+
+    private func handleConfigurationChange() {
+        guard isRunning else {
+            return
+        }
+        stop()
+        if wantsRunning {
+            start()
+        }
+    }
+
     // MARK: - Permission
 
     private static func currentAuthorization() -> VoiceAuthorizationStatus {
@@ -79,11 +110,11 @@ final class VoiceEngine {
                 return
             }
             authorizationStatus = granted ? .authorized : .denied
+            // the user may have toggled voice back off while the prompt was up; honor that either way.
+            guard wantsRunning else {
+                return
+            }
             if granted {
-                // the user may have toggled voice back off while the prompt was up; honor that intent.
-                guard wantsRunning else {
-                    return
-                }
                 start()
             } else {
                 onPermissionDenied?()
@@ -106,10 +137,13 @@ final class VoiceEngine {
             onUnavailable?()
             return
         }
+        let generation = captureGeneration
         input.installTap(onBus: 0, bufferSize: 4_096, format: format) { buffer, _ in
             let level = Self.rms(from: buffer)
+            // stamp on the audio thread so the silence debounce isn't skewed by main-actor delivery lag.
+            let timestamp = CACurrentMediaTime()
             Task { @MainActor [weak self] in
-                self?.ingest(level: level)
+                self?.ingest(level: level, at: timestamp, generation: generation)
             }
         }
         isTapInstalled = true
@@ -129,6 +163,8 @@ final class VoiceEngine {
         guard isRunning || isTapInstalled else {
             return
         }
+        // invalidate any speech samples still queued from this session before tearing down.
+        captureGeneration += 1
         engine.stop()
         removeTap()
         isRunning = false
@@ -147,8 +183,12 @@ final class VoiceEngine {
         isTapInstalled = false
     }
 
-    private func ingest(level: Float) {
-        let speaking = detector.update(level: level, at: CACurrentMediaTime())
+    private func ingest(level: Float, at timestamp: TimeInterval, generation: Int) {
+        // drop samples captured before the latest stop (a quick disable/re-enable).
+        guard generation == captureGeneration else {
+            return
+        }
+        let speaking = detector.update(level: level, at: timestamp)
         guard speaking != isSpeaking else {
             return
         }
@@ -158,20 +198,24 @@ final class VoiceEngine {
 
     // MARK: - Analysis
 
-    /// root-mean-square amplitude of the buffer's first channel in 0...1. pure; runs on the audio thread.
+    /// root-mean-square amplitude across the buffer's channels in 0...1. pure; runs on the audio thread.
     nonisolated static func rms(from buffer: AVAudioPCMBuffer) -> Float {
-        guard let channel = buffer.floatChannelData?[0] else {
+        guard let channels = buffer.floatChannelData else {
             return 0
         }
+        let channelCount = Int(buffer.format.channelCount)
         let frameCount = Int(buffer.frameLength)
-        guard frameCount > 0 else {
+        guard channelCount > 0, frameCount > 0 else {
             return 0
         }
         var sum: Float = 0
-        for index in 0 ..< frameCount {
-            let sample = channel[index]
-            sum += sample * sample
+        for channelIndex in 0 ..< channelCount {
+            let samples = channels[channelIndex]
+            for frameIndex in 0 ..< frameCount {
+                let sample = samples[frameIndex]
+                sum += sample * sample
+            }
         }
-        return (sum / Float(frameCount)).squareRoot()
+        return (sum / Float(channelCount * frameCount)).squareRoot()
     }
 }

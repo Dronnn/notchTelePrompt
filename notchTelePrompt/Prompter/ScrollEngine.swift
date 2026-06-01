@@ -86,6 +86,9 @@ final class ScrollEngine {
     /// whether the pointer is currently over the prompter.
     private(set) var isHovering = false
 
+    /// when true, voice-follow owns resume decisions, so hover only pauses and never auto-resumes here.
+    var isVoiceDriven = false
+
     /// whether playback was active when the current hover began (so we only auto-resume real playback).
     private var wasPlayingBeforeHover = false
 
@@ -253,6 +256,16 @@ final class ScrollEngine {
             return
         }
         isHovering = hovering
+        if isVoiceDriven {
+            // in voice mode the view model reconciles playback from speech on hover changes; hover here
+            // only pauses while the pointer rests and never schedules an auto-resume that would fight it.
+            resumeTask?.cancel()
+            resumeTask = nil
+            if hovering, isPlaying {
+                pause()
+            }
+            return
+        }
         if hovering {
             resumeTask?.cancel()
             resumeTask = nil

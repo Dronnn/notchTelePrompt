@@ -26,6 +26,7 @@ final class PrompterViewModel {
             scrollEngine.stop()
             reloadFontSize()
             syncEngineGeometry()
+            reconcileVoicePlayback()
         }
     }
 
@@ -98,7 +99,7 @@ final class PrompterViewModel {
                 return
             }
             isSpeaking = speaking
-            handleVoiceSpeaking(speaking)
+            reconcileVoicePlayback()
         }
         voiceEngine.onPermissionDenied = { [weak self] in
             guard let self else {
@@ -106,6 +107,7 @@ final class PrompterViewModel {
             }
             isVoiceModeEnabled = false
             isSpeaking = false
+            scrollEngine.isVoiceDriven = false
             onVoicePermissionDenied?()
         }
         voiceEngine.onUnavailable = { [weak self] in
@@ -114,6 +116,7 @@ final class PrompterViewModel {
             }
             isVoiceModeEnabled = false
             isSpeaking = false
+            scrollEngine.isVoiceDriven = false
             onVoiceUnavailable?()
         }
     }
@@ -147,6 +150,7 @@ final class PrompterViewModel {
 
     func setHovering(_ hovering: Bool) {
         scrollEngine.setHovering(hovering)
+        reconcileVoicePlayback()
     }
 
     /// the viewport height measured by the view; feeds the engine so max offset / progress are right.
@@ -161,8 +165,15 @@ final class PrompterViewModel {
         if isVoiceModeEnabled {
             disableVoiceMode()
         } else {
+            // voice-follow needs a script to follow; without one, don't arm the microphone.
+            guard currentScript != nil else {
+                return
+            }
             isVoiceModeEnabled = true
+            scrollEngine.isVoiceDriven = true
             voiceEngine.enable()
+            // settle playback immediately: silence on enable should hold the scroll until speech.
+            reconcileVoicePlayback()
         }
     }
 
@@ -174,20 +185,19 @@ final class PrompterViewModel {
         }
         isVoiceModeEnabled = false
         isSpeaking = false
+        scrollEngine.isVoiceDriven = false
         voiceEngine.disable()
     }
 
-    /// drives the scroll engine from speech: speaking resumes/starts (no countdown — speech is the cue),
-    /// silence pauses. only acts in voice mode with a loaded script.
-    private func handleVoiceSpeaking(_ speaking: Bool) {
+    /// reconciles scroll playback with the live voice inputs: scroll only while speaking and not hovering
+    /// (explicit hover-to-pause wins), pause otherwise. level-driven rather than edge-driven, so enabling
+    /// voice, switching scripts and hover changes all settle correctly. a no-op when voice mode is off.
+    private func reconcileVoicePlayback() {
         guard isVoiceModeEnabled, currentScript != nil else {
             return
         }
-        if speaking {
-            // explicit hover-to-pause wins over voice: don't resume while the pointer holds it still.
-            guard !scrollEngine.isHovering else {
-                return
-            }
+        let shouldScroll = isSpeaking && !scrollEngine.isHovering
+        if shouldScroll {
             switch scrollEngine.state {
             case .idle:
                 scrollEngine.start(countdown: .off)
