@@ -13,13 +13,16 @@ concurrency:
 jobs:
   build-test:
     name: Build & Test
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Versions
+      - name: Select Xcode 26
         run: |
+          # the project uses Swift 6.2 main-actor-by-default isolation (SWIFT_DEFAULT_ACTOR_ISOLATION),
+          # which only Xcode 26+ understands, so pin to the newest installed 26.x to match the dev toolchain.
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
           xcodebuild -version
           swift --version
 
