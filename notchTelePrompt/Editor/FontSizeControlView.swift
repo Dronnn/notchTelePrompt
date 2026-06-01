@@ -19,6 +19,7 @@ struct FontSizeControlView: View {
                 viewModel.decreaseFontSize()
             }
             .disabled(!viewModel.canDecreaseFontSize)
+            .keyboardShortcut("-", modifiers: .command)
 
             Text(viewModel.fontSize, format: .number.precision(.fractionLength(0)))
                 .monospacedDigit()
@@ -27,6 +28,7 @@ struct FontSizeControlView: View {
                 viewModel.increaseFontSize()
             }
             .disabled(!viewModel.canIncreaseFontSize)
+            .keyboardShortcut("=", modifiers: .command)
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)

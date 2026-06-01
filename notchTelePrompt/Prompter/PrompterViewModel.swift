@@ -80,8 +80,25 @@ final class PrompterViewModel {
 
     // MARK: - Playback
 
-    func togglePlayPause() {
-        scrollEngine.togglePlayPause()
+    /// starts (honoring the configured countdown), pauses or resumes depending on the current state.
+    /// used by the overlay controls, the menu bar, global hotkeys and the mini control panel so play/
+    /// pause behaves the same everywhere — unlike the engine's countdown-less toggle.
+    func playPause() {
+        switch scrollEngine.state {
+        case .playing:
+            scrollEngine.pause()
+        case .paused:
+            scrollEngine.resume()
+        case .idle, .finished:
+            scrollEngine.start(countdown: countdown)
+        case .countdown:
+            break
+        }
+    }
+
+    /// stops playback and returns to the top.
+    func stop() {
+        scrollEngine.stop()
     }
 
     func restart() {

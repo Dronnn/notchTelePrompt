@@ -71,6 +71,7 @@ struct ScriptEditorContentView: View {
                 }
             }
             .disabled(viewModel.selectedScript == nil)
+            .keyboardShortcut("r", modifiers: .command)
         }
     }
 }

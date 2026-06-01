@@ -80,6 +80,20 @@ final class SetNavigatorWindowController: NSObject {
         show()
     }
 
+    // MARK: - Selection (driven by global hotkeys)
+
+    /// advances the highlight to the next script and shows it. refreshes first so the hotkey works even
+    /// before the navigator has been opened this session; refresh keeps the cursor when the set is unchanged.
+    func selectNext() {
+        viewModel.refresh()
+        viewModel.next()
+    }
+
+    func selectPrevious() {
+        viewModel.refresh()
+        viewModel.previous()
+    }
+
     // MARK: - Positioning
 
     /// docks the navigator to the left edge of the camera screen, vertically centered, at the

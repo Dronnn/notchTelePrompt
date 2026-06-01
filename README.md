@@ -46,7 +46,9 @@ Implemented so far:
 
 - **Scroll engine & playback** — drift-free, time-based auto-scroll at an adjustable speed, with a pre-roll countdown, play/pause, restart, hover-to-pause, and manual wheel/trackpad scrolling — all from the overlay's hover controls.
 
-Next up: menu-bar controls and rebindable global hotkeys.
+- **Menu-bar controls & global hotkeys** — run the prompter from the menu bar (start/pause, restart, stop, open recent, snap to notch, mini controls) or from rebindable global hotkeys that work even when another app has focus — show/hide, start/pause, restart, and speed up/down — plus optional next/previous-script and open-editor bindings. Rebind everything in a Shortcuts preferences pane. An optional floating mini control panel mirrors the playback buttons, and in-app shortcuts cover Start Prompter and text size.
+
+Next up: on-device voice-activity mode — scroll while you speak, pause on silence.
 
 ## License
 

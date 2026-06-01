@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1873D1A32FCD7489008BDE18 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 1873D1A22FCD7489008BDE18 /* KeyboardShortcuts */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1873CEDF2FCCC8EA008BDE18 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1873D1A32FCD7489008BDE18 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +118,7 @@
 			);
 			name = notchTelePrompt;
 			packageProductDependencies = (
+				1873D1A22FCD7489008BDE18 /* KeyboardShortcuts */,
 			);
 			productName = notchTelePrompt;
 			productReference = 1873CECF2FCCC8E9008BDE18 /* notchTelePrompt.app */;
@@ -196,6 +202,9 @@
 			);
 			mainGroup = 1873CEC62FCCC8E9008BDE18;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1873D1A12FCD7489008BDE18 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1873CED02FCCC8E9008BDE18 /* Products */;
 			projectDirPath = "";
@@ -602,6 +611,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1873D1A12FCD7489008BDE18 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1873D1A22FCD7489008BDE18 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1873D1A12FCD7489008BDE18 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1873CEC72FCCC8E9008BDE18 /* Project object */;
 }

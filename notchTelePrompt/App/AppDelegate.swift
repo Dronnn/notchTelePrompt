@@ -20,6 +20,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var prompterController: PrompterWindowController?
     private var setNavigatorController: SetNavigatorWindowController?
     private var libraryViewModel: LibraryViewModel?
+    private let shortcuts = ShortcutsController()
+    private let preferences = PreferencesWindowController()
 
     func applicationDidFinishLaunching(_: Notification) {
         let library = LibraryViewModel(store: environment.scriptStore)
@@ -49,6 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         library.onScriptDeleted = { [weak self] id in self?.prompterController?.forgetScript(id) }
         menuBarController = makeMenuBarController(windowController: windowController, importExportVM: importExportVM)
+        configureShortcuts()
     }
 
     // MARK: - Menu Bar
@@ -65,6 +68,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.isPrompterVisible = { [weak self] in self?.prompterController?.isVisible ?? false }
         menuBar.onToggleNavigator = { [weak self] in self?.setNavigatorController?.toggle() }
         menuBar.isNavigatorVisible = { [weak self] in self?.setNavigatorController?.isVisible ?? false }
+        menuBar.onStartPause = { [weak self] in self?.startPausePrompter() }
+        menuBar.onRestart = { [weak self] in self?.restartPrompter() }
+        menuBar.onStop = { [weak self] in self?.prompterController?.stop() }
+        menuBar.isPrompterPlaying = { [weak self] in self?.prompterController?.isPlaying ?? false }
+        menuBar.onToggleControlPanel = { [weak self] in self?.prompterController?.toggleControlPanel() }
+        menuBar.isControlPanelVisible = { [weak self] in self?.prompterController?.isControlPanelVisible ?? false }
+        menuBar.recentScripts = { [weak self] in self?.recentScriptsForMenu() ?? [] }
+        menuBar.onShowScript = { [weak self] script in self?.showPrompter(script) }
+        menuBar.onOpenPreferences = { [weak self] in self?.showPreferences() }
         menuBar.onImportScript = { [weak windowController, weak importExportVM] in
             windowController?.open()
             Task { await importExportVM?.importScript() }
@@ -89,23 +101,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         prompterController?.show(script: script)
     }
 
-    /// menu-bar toggle: hide if visible; else reopen the last script, then the selection, then the most
-    /// recent; open the library only when there is nothing to show.
+    /// menu-bar toggle: hide if visible; otherwise resolve and show a script (or open the library).
     private func togglePrompter() {
         guard let prompter = prompterController else {
             return
         }
         if prompter.isVisible {
             prompter.hide()
-            return
+        } else {
+            ensurePrompterShowing()
+        }
+    }
+
+    /// resolves a script to show (last shown, else library selection, else most recent) and shows it.
+    /// returns whether a script is now showing; opens the library when there is nothing to show.
+    @discardableResult
+    private func ensurePrompterShowing() -> Bool {
+        guard let prompter = prompterController else {
+            return false
+        }
+        if prompter.isVisible {
+            return true
         }
         let script = prompter.lastScript
             ?? libraryViewModel?.selectedScript
             ?? environment.scriptStore.mostRecentScript
         if let script {
             showPrompter(script)
-        } else {
-            mainWindowController?.open()
+            return true
         }
+        mainWindowController?.open()
+        return false
+    }
+
+    private func startPausePrompter() {
+        guard ensurePrompterShowing() else {
+            return
+        }
+        prompterController?.playPause()
+    }
+
+    private func restartPrompter() {
+        guard ensurePrompterShowing() else {
+            return
+        }
+        prompterController?.restart()
+    }
+
+    private func recentScriptsForMenu() -> [Script] {
+        (try? environment.scriptStore.recent(limit: 8)) ?? []
+    }
+
+    private func showPreferences() {
+        preferences.show()
+    }
+
+    /// installs the global hotkey handlers, forwarding each to the matching app action.
+    private func configureShortcuts() {
+        shortcuts.onTogglePrompter = { [weak self] in self?.togglePrompter() }
+        shortcuts.onStartPause = { [weak self] in self?.startPausePrompter() }
+        shortcuts.onRestart = { [weak self] in self?.restartPrompter() }
+        shortcuts.onSpeedUp = { [weak self] in self?.prompterController?.increaseSpeed() }
+        shortcuts.onSpeedDown = { [weak self] in self?.prompterController?.decreaseSpeed() }
+        shortcuts.onNextScript = { [weak self] in self?.setNavigatorController?.selectNext() }
+        shortcuts.onPreviousScript = { [weak self] in self?.setNavigatorController?.selectPrevious() }
+        shortcuts.onOpenEditor = { [weak self] in self?.mainWindowController?.open() }
+        shortcuts.register()
     }
 }

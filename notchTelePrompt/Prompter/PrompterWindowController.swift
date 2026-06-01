@@ -95,6 +95,63 @@ final class PrompterWindowController: NSObject {
         viewModel.currentScript = nil
     }
 
+    // MARK: - Playback controls
+
+    /// whether the engine is actively scrolling; drives the menu's dynamic Start / Pause title.
+    var isPlaying: Bool {
+        viewModel.scrollEngine.state == .playing
+    }
+
+    /// play/pause the current script, honoring the configured countdown; no-op when nothing is loaded.
+    func playPause() {
+        guard viewModel.currentScript != nil else {
+            return
+        }
+        viewModel.playPause()
+    }
+
+    func restart() {
+        guard viewModel.currentScript != nil else {
+            return
+        }
+        viewModel.restart()
+    }
+
+    func stop() {
+        viewModel.stop()
+    }
+
+    func increaseSpeed() {
+        guard viewModel.currentScript != nil else {
+            return
+        }
+        viewModel.increaseSpeed()
+    }
+
+    func decreaseSpeed() {
+        guard viewModel.currentScript != nil else {
+            return
+        }
+        viewModel.decreaseSpeed()
+    }
+
+    // MARK: - Mini control panel
+
+    /// the optional floating control panel; created on first use, sharing this overlay's view model.
+    private lazy var controlPanelController: PrompterControlPanelController = {
+        let controller = PrompterControlPanelController(viewModel: viewModel)
+        controller.onHidePrompter = { [weak self] in self?.hide() }
+        return controller
+    }()
+
+    var isControlPanelVisible: Bool {
+        controlPanelController.isVisible
+    }
+
+    func toggleControlPanel() {
+        controlPanelController.toggle()
+    }
+
     // MARK: - Positioning
 
     private func snapToNotch() {

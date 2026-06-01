@@ -70,7 +70,7 @@ private struct PrompterControlsView: View {
     var body: some View {
         HStack {
             Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
-                viewModel.togglePlayPause()
+                viewModel.playPause()
             }
             Button("Restart", systemImage: "arrow.counterclockwise") {
                 viewModel.restart()
