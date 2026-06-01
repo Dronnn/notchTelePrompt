@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Resolve packages
+        run: >
+          xcodebuild -resolvePackageDependencies
+          -project notchTelePrompt.xcodeproj
+          -scheme notchTelePrompt
+
+      - name: Build & test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project notchTelePrompt.xcodeproj \
+            -scheme notchTelePrompt \
+            -destination 'platform=macOS' \
+            -only-testing:notchTelePromptTests \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+  lint:
+    name: Lint & Format
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install swiftlint swiftformat
+
+      - name: SwiftFormat (lint)
+        run: swiftformat --lint .
+
+      - name: SwiftLint
+        run: swiftlint lint --quiet
