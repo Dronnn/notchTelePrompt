@@ -16,12 +16,14 @@ import SwiftData
 final class AppEnvironment {
     let modelContainer: ModelContainer
     let scriptStore: ScriptStore
+    let promptSetStore: PromptSetStore
 
     init() {
         do {
             let container = try ModelContainerFactory.makePersistent()
             modelContainer = container
             scriptStore = ScriptStore(container: container)
+            promptSetStore = PromptSetStore(container: container)
         } catch {
             // the app cannot function without its data store; fail loudly during development.
             fatalError("failed to create model container: \(error)")

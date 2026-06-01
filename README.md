@@ -42,6 +42,8 @@ Implemented so far:
 
 - **Prompter display** — large readable text with the current line emphasized and the rest gently dimmed, paragraphs and line breaks preserved, plus a subtle progress bar — tuned for reading at a glance near the camera. Text size is adjustable with +/- controls in both the editor and the overlay, saved per script.
 
+- **Prompt sets & session navigator** — group prompts into reusable, ordered sets and run a session from a small floating navigator docked to the left, listing the set's prompts by number; click one to show it in the prompter, step next/previous, and reorder by dragging. Build and edit sets from a dedicated Sets section in the main window; reordering stays in sync across both.
+
 Next up: the scroll engine — countdown, fixed-speed auto-scroll, pause/resume, and hover-to-pause.
 
 ## License

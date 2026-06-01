@@ -20,12 +20,17 @@ final class MenuBarController: NSObject {
     var onExportScript: (() -> Void)?
     var onShowPrompter: (() -> Void)?
     var onSnapToNotch: (() -> Void)?
+    var onToggleNavigator: (() -> Void)?
     /// reports the prompter's current visibility so the menu can show the right Show / Hide title.
     var isPrompterVisible: (() -> Bool)?
+    /// reports the set navigator's visibility so the menu can show the right Show / Hide title.
+    var isNavigatorVisible: (() -> Bool)?
 
     private let statusItem: NSStatusItem
     /// kept so the title can be flipped between "Show Prompter" and "Hide Prompter" as the menu opens.
     private var showPrompterItem: NSMenuItem?
+    /// kept so the title can be flipped between "Show Set Navigator" and "Hide Set Navigator".
+    private var showNavigatorItem: NSMenuItem?
 
     override init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -77,6 +82,12 @@ final class MenuBarController: NSObject {
         self.showPrompterItem = showPrompterItem
         menu.addItem(showPrompterItem)
         menu.addItem(menuItem(title: String(localized: "Snap Prompter to Notch"), action: #selector(snapToNotch)))
+        let showNavigatorItem = menuItem(
+            title: String(localized: "Show Set Navigator"),
+            action: #selector(toggleNavigator)
+        )
+        self.showNavigatorItem = showNavigatorItem
+        menu.addItem(showNavigatorItem)
         menu.addItem(.separator())
         menu.addItem(menuItem(title: String(localized: "Preferences…"), action: #selector(openPreferences)))
         menu.addItem(.separator())
@@ -135,6 +146,11 @@ final class MenuBarController: NSObject {
         onSnapToNotch?()
     }
 
+    @objc
+    private func toggleNavigator() {
+        onToggleNavigator?()
+    }
+
     // TODO: wire to the preferences window in phase 10.
     @objc
     private func openPreferences() {}
@@ -150,9 +166,13 @@ final class MenuBarController: NSObject {
 extension MenuBarController: NSMenuDelegate {
     /// flips the prompter item title to reflect whether the overlay is currently visible.
     func menuNeedsUpdate(_: NSMenu) {
-        let visible = isPrompterVisible?() ?? false
-        showPrompterItem?.title = visible
+        let prompterVisible = isPrompterVisible?() ?? false
+        showPrompterItem?.title = prompterVisible
             ? String(localized: "Hide Prompter")
             : String(localized: "Show Prompter")
+        let navigatorVisible = isNavigatorVisible?() ?? false
+        showNavigatorItem?.title = navigatorVisible
+            ? String(localized: "Hide Set Navigator")
+            : String(localized: "Show Set Navigator")
     }
 }

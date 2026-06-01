@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var mainWindowController: MainWindowController?
     private var importExportViewModel: ImportExportViewModel?
     private var prompterController: PrompterWindowController?
+    private var setNavigatorController: SetNavigatorWindowController?
     private var libraryViewModel: LibraryViewModel?
 
     func applicationDidFinishLaunching(_: Notification) {
@@ -25,16 +26,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         libraryViewModel = library
         let importExportVM = ImportExportViewModel(store: environment.scriptStore, libraryViewModel: library)
         importExportViewModel = importExportVM
+        let setsVM = SetsViewModel(promptSetStore: environment.promptSetStore, scriptStore: environment.scriptStore)
 
         let windowController = MainWindowController(
             environment: environment,
             libraryViewModel: library,
-            importExportViewModel: importExportVM
+            importExportViewModel: importExportVM,
+            setsViewModel: setsVM
         )
         mainWindowController = windowController
         windowController.onStartPrompter = { [weak self] script in self?.showPrompter(script) }
 
         prompterController = PrompterWindowController(store: environment.scriptStore)
+
+        let navigator = SetNavigatorWindowController(
+            promptSetStore: environment.promptSetStore,
+            scriptStore: environment.scriptStore
+        )
+        // selecting a prompt in the floating navigator shows it in the prompter, just like Start Prompter.
+        navigator.onSelectScript = { [weak self] script in self?.showPrompter(script) }
+        setNavigatorController = navigator
+
         library.onScriptDeleted = { [weak self] id in self?.prompterController?.forgetScript(id) }
         menuBarController = makeMenuBarController(windowController: windowController, importExportVM: importExportVM)
     }
@@ -51,6 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.onShowPrompter = { [weak self] in self?.togglePrompter() }
         menuBar.onSnapToNotch = { [weak self] in self?.prompterController?.snap() }
         menuBar.isPrompterVisible = { [weak self] in self?.prompterController?.isVisible ?? false }
+        menuBar.onToggleNavigator = { [weak self] in self?.setNavigatorController?.toggle() }
+        menuBar.isNavigatorVisible = { [weak self] in self?.setNavigatorController?.isVisible ?? false }
         menuBar.onImportScript = { [weak windowController, weak importExportVM] in
             windowController?.open()
             Task { await importExportVM?.importScript() }

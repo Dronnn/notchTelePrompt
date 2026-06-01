@@ -21,7 +21,8 @@ final class MainWindowController {
     init(
         environment: AppEnvironment,
         libraryViewModel: LibraryViewModel,
-        importExportViewModel: ImportExportViewModel
+        importExportViewModel: ImportExportViewModel,
+        setsViewModel: SetsViewModel
     ) {
         // forward through a stable closure so late assignment of onStartPrompter is still picked up.
         var forwardStart: ((Script) -> Void)?
@@ -31,6 +32,7 @@ final class MainWindowController {
                 environment: environment,
                 libraryViewModel: libraryViewModel,
                 importExportViewModel: importExportViewModel,
+                setsViewModel: setsViewModel,
                 onStartPrompter: forwardToController
             )
         )
