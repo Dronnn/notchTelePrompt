@@ -50,6 +50,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         prompterController?.onVoicePermissionDenied = { [weak self] in self?.presentMicrophoneDeniedAlert() }
         prompterController?.onVoiceUnavailable = { [weak self] in self?.presentMicrophoneUnavailableAlert() }
+        prompterController?.onToggleNavigator = { [weak self] in self?.setNavigatorController?.toggle() }
+        prompterController?.onToggleLibrary = { [weak self] in self?.mainWindowController?.toggle() }
+        prompterController?.onTogglePreferences = { [weak self] in self?.preferences.toggle() }
 
         let navigator = SetNavigatorWindowController(
             promptSetStore: environment.promptSetStore,

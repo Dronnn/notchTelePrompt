@@ -33,12 +33,25 @@ final class PreferencesWindowController: NSObject {
 
     // MARK: - Presentation
 
+    var isVisible: Bool {
+        window?.isVisible ?? false
+    }
+
     func show() {
         let existingWindow = window ?? makeWindow()
         window = existingWindow
         // bring the app forward so the recorder can become key and capture keys.
         NSApp.activate(ignoringOtherApps: true)
         existingWindow.makeKeyAndOrderFront(nil)
+    }
+
+    /// flips the preferences window between shown and hidden; used by the prompter's preferences toggle.
+    func toggle() {
+        if isVisible {
+            window?.orderOut(nil)
+        } else {
+            show()
+        }
     }
 
     // MARK: - Window

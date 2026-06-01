@@ -50,11 +50,11 @@ struct PrompterControlPanelView: View {
             Button("Smaller text", systemImage: "textformat.size.smaller") {
                 viewModel.decreaseFontSize()
             }
-            .disabled(viewModel.fontSize <= PrompterFontSize.min)
+            .disabled(!viewModel.canDecreaseFontSize)
             Button("Larger text", systemImage: "textformat.size.larger") {
                 viewModel.increaseFontSize()
             }
-            .disabled(viewModel.fontSize >= PrompterFontSize.max)
+            .disabled(!viewModel.canIncreaseFontSize)
             Button(
                 viewModel.isVoiceModeEnabled ? "Voice on" : "Voice off",
                 systemImage: voiceSymbol

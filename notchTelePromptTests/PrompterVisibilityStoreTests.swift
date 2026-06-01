@@ -53,4 +53,29 @@ struct PrompterVisibilityStoreTests {
         store.toggle()
         #expect(store.isVisible == false)
     }
+
+    // MARK: - Size
+
+    @Test
+    func defaultSizeIsNil() throws {
+        let store = try makeStore()
+        #expect(store.size == nil)
+    }
+
+    @Test
+    func setSizePersistsAndReadsBack() throws {
+        let store = try makeStore()
+        let size = CGSize(width: 720, height: 160)
+        store.setSize(size)
+        #expect(store.size == size)
+    }
+
+    @Test
+    func nonPositiveDimensionsReadBackAsNil() throws {
+        let store = try makeStore()
+        store.setSize(CGSize(width: 0, height: 200))
+        #expect(store.size == nil)
+        store.setSize(CGSize(width: 200, height: -10))
+        #expect(store.size == nil)
+    }
 }

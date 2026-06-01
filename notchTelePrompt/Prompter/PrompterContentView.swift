@@ -9,13 +9,15 @@
 import SwiftUI
 
 /// prompter rendering: the current script text on a translucent dark background,
-/// with a subtle progress bar and close / snap-to-notch controls that fade in on hover.
+/// with a subtle progress bar and an always-visible control row in the top-right corner.
 struct PrompterContentView: View {
     let viewModel: PrompterViewModel
     let onClose: () -> Void
     let onSnap: () -> Void
-
-    @State private var isHovering = false
+    let onToggleNavigator: () -> Void
+    let onToggleControlPanel: () -> Void
+    let onToggleLibrary: () -> Void
+    let onTogglePreferences: () -> Void
 
     var body: some View {
         PrompterBodyView(viewModel: viewModel)
@@ -29,9 +31,15 @@ struct PrompterContentView: View {
                 PrompterProgressBar(progress: viewModel.progress)
             }
             .overlay(alignment: .topTrailing) {
-                PrompterControlsView(viewModel: viewModel, onClose: onClose, onSnap: onSnap)
-                    .opacity(isHovering ? 1 : 0)
-                    .animation(.easeInOut(duration: 0.15), value: isHovering)
+                PrompterControlsView(
+                    viewModel: viewModel,
+                    onClose: onClose,
+                    onSnap: onSnap,
+                    onToggleNavigator: onToggleNavigator,
+                    onToggleControlPanel: onToggleControlPanel,
+                    onToggleLibrary: onToggleLibrary,
+                    onTogglePreferences: onTogglePreferences
+                )
             }
             .overlay(alignment: .topLeading) {
                 if viewModel.isVoiceModeEnabled {
@@ -41,7 +49,6 @@ struct PrompterContentView: View {
             }
             .clipShape(.rect(cornerRadius: 8))
             .onHover { hovering in
-                isHovering = hovering
                 viewModel.setHovering(hovering)
             }
     }
@@ -63,11 +70,16 @@ private struct PrompterBodyView: View {
     }
 }
 
-/// the subtle hover-revealed control row over the prompter text: font size, snap-to-notch and close.
+/// the always-visible control row over the prompter: playback, font size, the window toggles
+/// (set navigator, mini controls, library, preferences), snap-to-notch and close.
 private struct PrompterControlsView: View {
     let viewModel: PrompterViewModel
     let onClose: () -> Void
     let onSnap: () -> Void
+    let onToggleNavigator: () -> Void
+    let onToggleControlPanel: () -> Void
+    let onToggleLibrary: () -> Void
+    let onTogglePreferences: () -> Void
 
     private var isPlaying: Bool {
         viewModel.scrollEngine.state == .playing
@@ -90,11 +102,15 @@ private struct PrompterControlsView: View {
             Button("Smaller text", systemImage: "textformat.size.smaller") {
                 viewModel.decreaseFontSize()
             }
-            .disabled(viewModel.fontSize <= PrompterFontSize.min)
+            .disabled(!viewModel.canDecreaseFontSize)
             Button("Larger text", systemImage: "textformat.size.larger") {
                 viewModel.increaseFontSize()
             }
-            .disabled(viewModel.fontSize >= PrompterFontSize.max)
+            .disabled(!viewModel.canIncreaseFontSize)
+            Button("Set Navigator", systemImage: "sidebar.left") { onToggleNavigator() }
+            Button("Mini Controls", systemImage: "slider.horizontal.3") { onToggleControlPanel() }
+            Button("Library", systemImage: "books.vertical") { onToggleLibrary() }
+            Button("Preferences", systemImage: "gearshape") { onTogglePreferences() }
             Button("Snap to Notch", systemImage: "arrow.up.to.line", action: onSnap)
             Button("Close", systemImage: "xmark", action: onClose)
         }

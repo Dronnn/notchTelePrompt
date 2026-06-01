@@ -21,6 +21,16 @@ final class PrompterWindowController: NSObject {
     private let viewModel: PrompterViewModel
     private let visibilityStore: PrompterVisibilityStore
 
+    /// local key-event monitor for the overlay's font shortcuts; installed only while the overlay is visible.
+    private var fontKeyMonitor: Any?
+
+    /// forwards the set-navigator toggle to the host, which owns the navigator window.
+    var onToggleNavigator: (() -> Void)?
+
+    /// forwards the library and preferences toggles to the host, which owns those windows.
+    var onToggleLibrary: (() -> Void)?
+    var onTogglePreferences: (() -> Void)?
+
     var isVisible: Bool {
         panel.isVisible
     }
@@ -33,7 +43,11 @@ final class PrompterWindowController: NSObject {
         let hostingView = PrompterHostingView(rootView: PrompterContentView(
             viewModel: viewModel,
             onClose: {},
-            onSnap: {}
+            onSnap: {},
+            onToggleNavigator: {},
+            onToggleControlPanel: {},
+            onToggleLibrary: {},
+            onTogglePreferences: {}
         ))
         // clear the default sizing options so SwiftUI's intrinsic size never feeds the window.
         hostingView.sizingOptions = []
@@ -55,17 +69,31 @@ final class PrompterWindowController: NSObject {
 
         super.init()
 
+        // restore the last user-set size before first show so the overlay reopens at its remembered
+        // dimensions; the hosting view fills the container via autoresizing, so it tracks the new size.
+        if let savedSize = visibilityStore.size {
+            panel.setContentSize(savedSize)
+        }
+        // become the panel's delegate so user resizes are persisted via windowDidEndLiveResize.
+        panel.delegate = self
+
         // rebuild the content with controls wired now that self is fully initialized.
         hostingView.rootView = PrompterContentView(
             viewModel: viewModel,
             onClose: { [weak self] in self?.hide() },
-            onSnap: { [weak self] in self?.snap() }
+            onSnap: { [weak self] in self?.snap() },
+            onToggleNavigator: { [weak self] in self?.onToggleNavigator?() },
+            onToggleControlPanel: { [weak self] in self?.toggleControlPanel() },
+            onToggleLibrary: { [weak self] in self?.onToggleLibrary?() },
+            onTogglePreferences: { [weak self] in self?.onTogglePreferences?() }
         )
 
         observeScreenChanges()
     }
 
     deinit {
+        // the local key monitor is torn down in hide(); this controller owns the overlay for the app's
+        // lifetime, so by the time it deinits the process is terminating and the monitor is already gone.
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -76,6 +104,7 @@ final class PrompterWindowController: NSObject {
         snapToNotch()
         // orderFront (never makeKeyAndOrderFront) keeps the panel non-activating and focus-safe.
         panel.orderFront(nil)
+        installFontKeyMonitor()
         visibilityStore.setVisible(true)
         viewModel.setOverlayVisible(true)
     }
@@ -88,6 +117,7 @@ final class PrompterWindowController: NSObject {
         }
         snapToNotch()
         panel.orderFront(nil)
+        installFontKeyMonitor()
         visibilityStore.setVisible(true)
         viewModel.setOverlayVisible(true)
     }
@@ -96,6 +126,7 @@ final class PrompterWindowController: NSObject {
         // releasing the mic here covers forgetScript too (it routes through hide), so voice-follow never
         // keeps capturing once the overlay is gone and its on-screen mic indicator disappears.
         viewModel.disableVoiceMode()
+        removeFontKeyMonitor()
         panel.orderOut(nil)
         visibilityStore.setVisible(false)
         viewModel.setOverlayVisible(false)
@@ -227,6 +258,49 @@ final class PrompterWindowController: NSObject {
         panel.setFrame(frame, display: true)
     }
 
+    // MARK: - Font shortcuts
+
+    /// ⌘+ / ⌘= grow and ⌘- / ⌘_ shrink the global font while the overlay is showing, so the shortcuts
+    /// work on the prompter when NotchPrompter is the active app. gated on NSApp.isActive (not panel key
+    /// status) so we only consume the keys while our app is frontmost — a local monitor never sees another
+    /// app's events, and the panel stays non-key, so this never steals focus from the user's recording app.
+    private func installFontKeyMonitor() {
+        guard fontKeyMonitor == nil else {
+            return
+        }
+        fontKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            // assumeIsolated returns a Sendable Bool; the non-Sendable NSEvent is returned outside it.
+            let handled = MainActor.assumeIsolated { () -> Bool in
+                guard let self, NSApp.isActive else {
+                    return false
+                }
+                let flags = event.modifierFlags.intersection([.command, .option, .control])
+                guard flags == .command else {
+                    return false
+                }
+                switch event.charactersIgnoringModifiers {
+                case "=", "+":
+                    self.viewModel.increaseFontSize()
+                    return true
+                case "-", "_":
+                    self.viewModel.decreaseFontSize()
+                    return true
+                default:
+                    return false
+                }
+            }
+            return handled ? nil : event
+        }
+    }
+
+    private func removeFontKeyMonitor() {
+        guard let monitor = fontKeyMonitor else {
+            return
+        }
+        NSEvent.removeMonitor(monitor)
+        fontKeyMonitor = nil
+    }
+
     // MARK: - Screen Changes
 
     /// re-snaps when displays are added/removed or rearranged, so the overlay stays under the notch.
@@ -246,5 +320,16 @@ final class PrompterWindowController: NSObject {
             return
         }
         snapToNotch()
+    }
+}
+
+// MARK: - NSWindowDelegate
+
+extension PrompterWindowController: NSWindowDelegate {
+    /// persists the overlay's size only after the user finishes a drag-resize, so it is restored on relaunch.
+    /// using didEndLiveResize (not didResize) means the programmatic clamp in snapToNotch — e.g. when the
+    /// overlay opens on a smaller display — never overwrites the user's preferred size.
+    func windowDidEndLiveResize(_: Notification) {
+        visibilityStore.setSize(panel.frame.size)
     }
 }

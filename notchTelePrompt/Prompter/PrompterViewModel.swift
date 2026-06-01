@@ -297,12 +297,22 @@ final class PrompterViewModel {
 
     // MARK: - Font size
 
+    /// whether the global font size can still grow / shrink; the controls bind to these so their enabled
+    /// state is authoritative (read from the stored default) rather than the possibly-lagging mirror.
+    var canIncreaseFontSize: Bool {
+        preferences.prompterDefaults.fontSize < PrompterFontSize.max
+    }
+
+    var canDecreaseFontSize: Bool {
+        preferences.prompterDefaults.fontSize > PrompterFontSize.min
+    }
+
     func increaseFontSize() {
-        applyFontSize(PrompterFontSize.incremented(fontSize))
+        applyFontSize(PrompterFontSize.incremented(preferences.prompterDefaults.fontSize))
     }
 
     func decreaseFontSize() {
-        applyFontSize(PrompterFontSize.decremented(fontSize))
+        applyFontSize(PrompterFontSize.decremented(preferences.prompterDefaults.fontSize))
     }
 
     /// clamps and writes through the single global font default. persisting posts
@@ -321,18 +331,20 @@ final class PrompterViewModel {
         syncEngineGeometry()
     }
 
-    /// keeps the engine's geometry inputs (font size, line spacing, content height) in step so its
-    /// offset math, max offset and progress stay correct. content height is computed, not measured.
-    /// called from explicit mutation points (script / font changes) and from the view when the line
-    /// count changes, never from inside a view body, so it can safely mutate the observable engine.
+    /// keeps the engine's font size and line spacing in step (these feed the scroll-speed math). the
+    /// content height is no longer computed here: the view measures the real rendered stack height (which
+    /// accounts for the true font line height and any wrapping) and feeds it via setMeasuredContentHeight,
+    /// so the last line lands at the center at the end. called from explicit mutation points and from the
+    /// view when the line count changes, never from inside a view body, so it can mutate the engine safely.
     func syncEngineGeometry() {
         scrollEngine.fontSize = fontSize
         scrollEngine.lineSpacing = lineSpacing
-        scrollEngine.contentHeight = PrompterLayoutMetrics.contentHeight(
-            lineCount: lines.count,
-            fontSize: fontSize,
-            lineSpacing: lineSpacing
-        )
+    }
+
+    /// the view's measured height of the rendered line stack; drives the scroll extent and progress so
+    /// the centered reading band reaches the last line at the end and the overscroll halves are correct.
+    func setMeasuredContentHeight(_ height: Double) {
+        scrollEngine.contentHeight = height
     }
 
     /// retunes the running voice engine when the sensitivity / silence-delay preferences change. the

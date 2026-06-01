@@ -12,6 +12,8 @@ import Foundation
 /// taking the defaults as a dependency keeps the type pure and isolation-free for unit tests.
 struct PrompterVisibilityStore {
     static let visibilityKey = "prompterIsVisible"
+    static let widthKey = "prompterWidth"
+    static let heightKey = "prompterHeight"
 
     private let defaults: UserDefaults
 
@@ -30,5 +32,22 @@ struct PrompterVisibilityStore {
 
     func toggle() {
         setVisible(!isVisible)
+    }
+
+    // MARK: - Size
+
+    /// the last user-set overlay size, or nil if none has been stored yet.
+    var size: CGSize? {
+        let width = defaults.double(forKey: Self.widthKey)
+        let height = defaults.double(forKey: Self.heightKey)
+        guard width > 0, height > 0 else {
+            return nil
+        }
+        return CGSize(width: width, height: height)
+    }
+
+    func setSize(_ size: CGSize) {
+        defaults.set(size.width, forKey: Self.widthKey)
+        defaults.set(size.height, forKey: Self.heightKey)
     }
 }

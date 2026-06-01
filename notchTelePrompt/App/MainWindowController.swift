@@ -49,8 +49,21 @@ final class MainWindowController {
 
     // MARK: - Presentation
 
+    var isVisible: Bool {
+        window.isVisible
+    }
+
     func open() {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
+    }
+
+    /// flips the library/editor window between shown and hidden; used by the prompter's library toggle.
+    func toggle() {
+        if isVisible {
+            window.orderOut(nil)
+        } else {
+            open()
+        }
     }
 }

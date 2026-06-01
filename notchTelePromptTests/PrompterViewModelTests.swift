@@ -78,4 +78,40 @@ struct PrompterViewModelTests {
         #expect(viewModel.scrollEngine.state == .idle)
         #expect(viewModel.scrollEngine.offset == 0)
     }
+
+    // MARK: - Font size
+
+    @Test
+    func decreaseFontSizeLowersStoredDefaultByOneStep() throws {
+        let (viewModel, _, preferences) = try makeViewModelWithScript()
+        preferences.prompterDefaults.fontSize = 28
+        viewModel.decreaseFontSize()
+        #expect(preferences.prompterDefaults.fontSize == 26)
+    }
+
+    @Test
+    func increaseFontSizeRaisesStoredDefaultByOneStep() throws {
+        let (viewModel, _, preferences) = try makeViewModelWithScript()
+        preferences.prompterDefaults.fontSize = 28
+        viewModel.increaseFontSize()
+        #expect(preferences.prompterDefaults.fontSize == 30)
+    }
+
+    @Test
+    func canDecreaseFontSizeReflectsLowerBound() throws {
+        let (viewModel, _, preferences) = try makeViewModelWithScript()
+        preferences.prompterDefaults.fontSize = PrompterFontSize.min
+        #expect(viewModel.canDecreaseFontSize == false)
+        preferences.prompterDefaults.fontSize = PrompterFontSize.min + PrompterFontSize.step
+        #expect(viewModel.canDecreaseFontSize == true)
+    }
+
+    @Test
+    func canIncreaseFontSizeReflectsUpperBound() throws {
+        let (viewModel, _, preferences) = try makeViewModelWithScript()
+        preferences.prompterDefaults.fontSize = PrompterFontSize.max
+        #expect(viewModel.canIncreaseFontSize == false)
+        preferences.prompterDefaults.fontSize = PrompterFontSize.max - PrompterFontSize.step
+        #expect(viewModel.canIncreaseFontSize == true)
+    }
 }
