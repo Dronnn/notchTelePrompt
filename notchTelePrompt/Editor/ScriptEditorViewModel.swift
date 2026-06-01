@@ -96,6 +96,14 @@ final class ScriptEditorViewModel {
         save()
     }
 
+    /// drops any unsaved edits without writing them, so a pending autosave/dirty flush
+    /// cannot overwrite content that another path is about to set on the same script.
+    func cancelPendingEdits() {
+        autosaveTask?.cancel()
+        autosaveTask = nil
+        isDirty = false
+    }
+
     private func saveScript(_ script: Script, title: String, text: String) {
         do {
             try store.update(script, title: title, text: text)

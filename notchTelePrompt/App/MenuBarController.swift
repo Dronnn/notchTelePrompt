@@ -14,6 +14,9 @@ import AppKit
 final class MenuBarController {
     weak var windowController: MainWindowController?
     var onNewScript: (() -> Void)?
+    var onImportScript: (() -> Void)?
+    var onPasteClipboard: (() -> Void)?
+    var onExportScript: (() -> Void)?
 
     private let statusItem: NSStatusItem
 
@@ -40,6 +43,25 @@ final class MenuBarController {
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
         menu.addItem(menuItem(title: String(localized: "New Script"), action: #selector(newScript)))
+        menu.addItem(menuItem(
+            title: String(localized: "Import…"),
+            action: #selector(importScript),
+            keyEquivalent: "i",
+            modifiers: [.command, .shift]
+        ))
+        menu.addItem(menuItem(
+            title: String(localized: "Paste as Script"),
+            action: #selector(pasteClipboard),
+            keyEquivalent: "v",
+            modifiers: [.command, .shift]
+        ))
+        menu.addItem(menuItem(
+            title: String(localized: "Export…"),
+            action: #selector(exportScript),
+            keyEquivalent: "e",
+            modifiers: [.command]
+        ))
+        menu.addItem(.separator())
         menu.addItem(menuItem(title: String(localized: "Show Library"), action: #selector(showLibrary)))
         menu.addItem(menuItem(title: String(localized: "Show Prompter"), action: #selector(showPrompter)))
         menu.addItem(.separator())
@@ -52,8 +74,15 @@ final class MenuBarController {
         return menu
     }
 
-    private func menuItem(title: String, action: Selector) -> NSMenuItem {
-        NSMenuItem(title: title, action: action, keyEquivalent: "")
+    private func menuItem(
+        title: String,
+        action: Selector,
+        keyEquivalent: String = "",
+        modifiers: NSEvent.ModifierFlags = []
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.keyEquivalentModifierMask = modifiers
+        return item
     }
 
     // MARK: - Actions
@@ -61,6 +90,21 @@ final class MenuBarController {
     @objc
     private func newScript() {
         onNewScript?()
+    }
+
+    @objc
+    private func importScript() {
+        onImportScript?()
+    }
+
+    @objc
+    private func pasteClipboard() {
+        onPasteClipboard?()
+    }
+
+    @objc
+    private func exportScript() {
+        onExportScript?()
     }
 
     @objc

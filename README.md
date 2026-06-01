@@ -37,8 +37,9 @@ Implemented so far:
 - **Foundations** — sandboxed menu-bar app (no Dock icon), Swift 6 strict concurrency, SwiftLint/SwiftFormat pipeline.
 - **Local persistence** — SwiftData model and script store: create, edit, search, sort, duplicate, favorite, and recent ordering.
 - **Editor & library** — split-view window with a plain-text editor (live word/character count and reading-time estimate, debounced autosave) and a searchable, sortable library with favorites, duplicate/rename/delete, and a first-launch welcome.
+- **Import / export** — import `.txt` / `.md` files, paste the clipboard as a new script (auto-titled), drag a file onto the editor, and export the current script — all UTF-8 with line breaks preserved.
 
-Next up: import/export (`.txt` / `.md`), clipboard and drag-and-drop, then the notch overlay window.
+Next up: the notch overlay window (a borderless panel that floats near the camera without stealing focus).
 
 ## License
 

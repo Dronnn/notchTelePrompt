@@ -16,14 +16,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var menuBarController: MenuBarController?
     private var mainWindowController: MainWindowController?
+    private var importExportViewModel: ImportExportViewModel?
 
     func applicationDidFinishLaunching(_: Notification) {
-        let windowController = MainWindowController(environment: environment)
+        let libraryViewModel = LibraryViewModel(store: environment.scriptStore)
+        let importExportVM = ImportExportViewModel(store: environment.scriptStore, libraryViewModel: libraryViewModel)
+        importExportViewModel = importExportVM
+
+        let windowController = MainWindowController(
+            environment: environment,
+            libraryViewModel: libraryViewModel,
+            importExportViewModel: importExportVM
+        )
         mainWindowController = windowController
 
         let menuBar = MenuBarController()
         menuBar.windowController = windowController
         menuBar.onNewScript = { [weak windowController] in windowController?.open() }
+        menuBar.onImportScript = { [weak windowController, weak importExportVM] in
+            windowController?.open()
+            Task { await importExportVM?.importScript() }
+        }
+        menuBar.onPasteClipboard = { [weak windowController, weak importExportVM] in
+            windowController?.open()
+            importExportVM?.pasteClipboardAsScript()
+        }
+        menuBar.onExportScript = { [weak importExportVM] in
+            Task { await importExportVM?.exportSelectedScript() }
+        }
         menuBarController = menuBar
     }
 }

@@ -15,8 +15,18 @@ import SwiftUI
 final class MainWindowController {
     private let window: NSWindow
 
-    init(environment: AppEnvironment) {
-        let hostingController = NSHostingController(rootView: MainView(environment: environment))
+    init(
+        environment: AppEnvironment,
+        libraryViewModel: LibraryViewModel,
+        importExportViewModel: ImportExportViewModel
+    ) {
+        let hostingController = NSHostingController(
+            rootView: MainView(
+                environment: environment,
+                libraryViewModel: libraryViewModel,
+                importExportViewModel: importExportViewModel
+            )
+        )
         window = NSWindow(contentViewController: hostingController)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.title = String(localized: "NotchPrompter")

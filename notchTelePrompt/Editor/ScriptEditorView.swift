@@ -11,12 +11,13 @@ import SwiftUI
 /// detail pane for editing a script's title and body, with live stats and an autosaving view model.
 struct ScriptEditorView: View {
     @Bindable var viewModel: ScriptEditorViewModel
+    let importExportViewModel: ImportExportViewModel
 
     var body: some View {
         if viewModel.selectedScript == nil {
             EmptyEditorView()
         } else {
-            ScriptEditorContentView(viewModel: viewModel)
+            ScriptEditorContentView(viewModel: viewModel, importExportViewModel: importExportViewModel)
         }
     }
 }

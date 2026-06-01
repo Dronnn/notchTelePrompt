@@ -14,14 +14,20 @@ import SwiftUI
 struct MainView: View {
     @State private var libraryViewModel: LibraryViewModel
     @State private var editorViewModel: ScriptEditorViewModel
+    @State private var importExportViewModel: ImportExportViewModel
 
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
 
     private let modelContainer: ModelContainer
 
-    init(environment: AppEnvironment) {
-        _libraryViewModel = State(initialValue: LibraryViewModel(store: environment.scriptStore))
+    init(
+        environment: AppEnvironment,
+        libraryViewModel: LibraryViewModel,
+        importExportViewModel: ImportExportViewModel
+    ) {
+        _libraryViewModel = State(initialValue: libraryViewModel)
         _editorViewModel = State(initialValue: ScriptEditorViewModel(store: environment.scriptStore))
+        _importExportViewModel = State(initialValue: importExportViewModel)
         modelContainer = environment.modelContainer
     }
 
@@ -29,7 +35,7 @@ struct MainView: View {
         NavigationSplitView {
             LibraryView(viewModel: libraryViewModel)
         } detail: {
-            ScriptEditorView(viewModel: editorViewModel)
+            ScriptEditorView(viewModel: editorViewModel, importExportViewModel: importExportViewModel)
         }
         .onChange(of: libraryViewModel.selectedScript) { _, newValue in
             editorViewModel.selectedScript = newValue
@@ -37,6 +43,33 @@ struct MainView: View {
         .modelContainer(modelContainer)
         .sheet(isPresented: .init(get: { !hasSeenWelcome }, set: { _ in })) {
             WelcomeView()
+        }
+        .alert(
+            "Couldn't complete that action",
+            isPresented: Binding(
+                get: { importExportViewModel.errorMessage != nil },
+                set: { if !$0 { importExportViewModel.errorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(importExportViewModel.errorMessage ?? "")
+        }
+        .confirmationDialog(
+            "Import dropped file",
+            isPresented: Binding(
+                get: { importExportViewModel.pendingDrop != nil },
+                set: { if !$0 { importExportViewModel.cancelDrop() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("New Script") { importExportViewModel.confirmDropAsNewScript() }
+            Button("Replace Contents", role: .destructive) {
+                importExportViewModel.confirmDropReplacingContents(in: editorViewModel)
+            }
+            Button("Cancel", role: .cancel) { importExportViewModel.cancelDrop() }
+        } message: {
+            Text("Create a new script from this file, or replace the current script's contents?")
         }
     }
 }

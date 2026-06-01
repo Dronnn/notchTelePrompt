@@ -12,6 +12,7 @@ import SwiftUI
 /// action.
 struct ScriptEditorContentView: View {
     @Bindable var viewModel: ScriptEditorViewModel
+    let importExportViewModel: ImportExportViewModel
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -41,7 +42,25 @@ struct ScriptEditorContentView: View {
             )
         }
         .padding()
+        .dropDestination(for: URL.self) { urls, _ in
+            guard let url = urls.first else {
+                return false
+            }
+            Task { await importExportViewModel.handleDroppedFile(url: url, into: viewModel) }
+            return true
+        }
         .toolbar {
+            if let script = viewModel.selectedScript {
+                Menu("Export", systemImage: "arrow.up.doc") {
+                    Button(ExportFormat.txt.localizedLabel) {
+                        Task { await importExportViewModel.exportScript(script, format: .txt) }
+                    }
+                    Button(ExportFormat.md.localizedLabel) {
+                        Task { await importExportViewModel.exportScript(script, format: .md) }
+                    }
+                }
+            }
+
             Button("Start Prompter", systemImage: "play.fill") {}
                 .disabled(true)
                 .help("Available once the prompter overlay is built (Phase 4).")
