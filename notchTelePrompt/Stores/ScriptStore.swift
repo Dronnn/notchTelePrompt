@@ -55,6 +55,13 @@ final class ScriptStore {
         (try? recent(limit: 1))?.first
     }
 
+    /// fetches a single script by its id, or nil if no script with that id exists.
+    func script(withID id: UUID) throws -> Script? {
+        var descriptor = FetchDescriptor<Script>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first
+    }
+
     /// filters by query using localized, case- and diacritic-insensitive matching on title and text.
     func search(_ query: String, sortedBy order: ScriptSortOrder = .updatedDescending) throws -> [Script] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)

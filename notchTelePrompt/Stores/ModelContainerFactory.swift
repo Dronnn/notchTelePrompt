@@ -13,7 +13,7 @@ import SwiftData
 /// tests use an in-memory container via makeInMemory().
 enum ModelContainerFactory {
     /// the schema is centralized so the app and tests stay in sync and future migrations have one source of truth.
-    static let schema = Schema([Script.self])
+    static let schema = Schema([Script.self, PromptSet.self])
 
     /// persistent container backed by Application Support.
     static func makePersistent() throws -> ModelContainer {
