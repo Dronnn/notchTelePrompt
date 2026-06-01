@@ -28,6 +28,12 @@ final class PreferencesStore {
         didSet { defaults.set(openEditorOnLaunch, forKey: Key.openEditorOnLaunch) }
     }
 
+    /// id of the script last shown in the prompter, restored on launch when restoreLastScript is on.
+    /// stored as its uuid string; nil clears it.
+    var lastShownScriptID: UUID? {
+        didSet { defaults.set(lastShownScriptID?.uuidString, forKey: Key.lastShownScriptID) }
+    }
+
     // MARK: - Prompter
 
     var prompterDefaults = ScriptPrompterSettings() {
@@ -79,6 +85,9 @@ final class PreferencesStore {
         if defaults.object(forKey: Key.openEditorOnLaunch) != nil {
             openEditorOnLaunch = defaults.bool(forKey: Key.openEditorOnLaunch)
         }
+        if let stored = defaults.string(forKey: Key.lastShownScriptID) {
+            lastShownScriptID = UUID(uuidString: stored)
+        }
         if
             let data = defaults.data(forKey: Key.prompterDefaults),
             let decoded = try? JSONDecoder().decode(ScriptPrompterSettings.self, from: data)
@@ -114,6 +123,7 @@ final class PreferencesStore {
         static let showDockIcon = "preferences.showDockIcon"
         static let restoreLastScript = "preferences.restoreLastScript"
         static let openEditorOnLaunch = "preferences.openEditorOnLaunch"
+        static let lastShownScriptID = "preferences.lastShownScriptID"
         static let prompterDefaults = "preferences.prompterDefaults"
         static let countdown = "preferences.countdown"
         static let voiceSensitivity = "preferences.voiceSensitivity"

@@ -15,6 +15,16 @@ import SwiftUI
 @MainActor
 final class PreferencesWindowController: NSObject {
     private var window: NSWindow?
+    private let preferencesStore: PreferencesStore
+    private let scriptStore: ScriptStore
+
+    // MARK: - Lifecycle
+
+    init(preferencesStore: PreferencesStore, scriptStore: ScriptStore) {
+        self.preferencesStore = preferencesStore
+        self.scriptStore = scriptStore
+        super.init()
+    }
 
     // MARK: - Presentation
 
@@ -38,7 +48,9 @@ final class PreferencesWindowController: NSObject {
         window.title = String(localized: "Preferences")
         // the controller outlives a closed window, so reopening must not use a deallocated instance.
         window.isReleasedWhenClosed = false
-        window.contentViewController = NSHostingController(rootView: PreferencesView())
+        window.contentViewController = NSHostingController(
+            rootView: PreferencesView(preferencesStore: preferencesStore, scriptStore: scriptStore)
+        )
         window.center()
         return window
     }

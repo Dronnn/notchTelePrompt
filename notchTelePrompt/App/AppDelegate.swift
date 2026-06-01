@@ -21,7 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var setNavigatorController: SetNavigatorWindowController?
     private var libraryViewModel: LibraryViewModel?
     private let shortcuts = ShortcutsController()
-    private let preferences = PreferencesWindowController()
+    private lazy var preferences = PreferencesWindowController(
+        preferencesStore: environment.preferencesStore,
+        scriptStore: environment.scriptStore
+    )
 
     func applicationDidFinishLaunching(_: Notification) {
         let library = LibraryViewModel(store: environment.scriptStore)
@@ -57,6 +60,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         library.onScriptDeleted = { [weak self] id in self?.prompterController?.forgetScript(id) }
         menuBarController = makeMenuBarController(windowController: windowController, importExportVM: importExportVM)
         configureShortcuts()
+        applyLaunchPreferences()
+    }
+
+    // MARK: - Launch Preferences
+
+    /// applies the startup preferences: Dock visibility, then optionally the editor and the last prompter.
+    private func applyLaunchPreferences() {
+        let prefs = environment.preferencesStore
+        DockIconPolicy.apply(showDockIcon: prefs.showDockIcon)
+        if prefs.openEditorOnLaunch {
+            mainWindowController?.open()
+        }
+        if prefs.restoreLastScript {
+            restoreLastShownScript()
+        }
+    }
+
+    /// shows the last-remembered script in the prompter, unless one is already showing.
+    /// a missing or unknown id is ignored silently.
+    private func restoreLastShownScript() {
+        guard prompterController?.isVisible == false else {
+            return
+        }
+        guard let id = environment.preferencesStore.lastShownScriptID else {
+            return
+        }
+        // try? on an optional-returning fetch yields Script??; flatten so a missing id is just nil.
+        let script = (try? environment.scriptStore.script(withID: id)).flatMap(\.self)
+        guard let script else {
+            return
+        }
+        showPrompter(script)
     }
 
     // MARK: - Menu Bar
@@ -105,6 +140,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // markUsed is best-effort recency bookkeeping; failing it must not block starting the prompter.
         try? environment.scriptStore.markUsed(script)
         libraryViewModel?.refresh()
+        // remember the last shown script so it can be restored on the next launch.
+        environment.preferencesStore.lastShownScriptID = script.id
         prompterController?.show(script: script)
     }
 
