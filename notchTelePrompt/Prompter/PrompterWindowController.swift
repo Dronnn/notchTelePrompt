@@ -35,31 +35,61 @@ final class PrompterWindowController: NSObject {
         panel.isVisible
     }
 
+    /// builds a hosting view that fills the panel's container via autoresizing; its intrinsic size never
+    /// feeds the window (sizingOptions = []), so the window size is owned only by snap-to-notch and resizing.
+    private static func makeHostingView<Content: View>(
+        _ rootView: Content,
+        frame: NSRect
+    ) -> PrompterHostingView<Content> {
+        let view = PrompterHostingView(rootView: rootView)
+        view.sizingOptions = []
+        view.translatesAutoresizingMaskIntoConstraints = true
+        view.autoresizingMask = [.width, .height]
+        view.frame = frame
+        return view
+    }
+
+    /// installs the control-row host pinned to the top-right of the container, sized to the pill via its
+    /// intrinsic content size, so it covers only the controls; everywhere else clicks, scroll and
+    /// window-background drags reach the text host beneath. layered above the text host, it also clears the
+    /// scroll-catcher's native subview, which composites above any sibling swiftui overlay in the text host.
+    private func installControlsHost(in container: NSView) {
+        let host = PrompterHostingView(rootView: PrompterControlsView(
+            viewModel: viewModel,
+            onClose: { [weak self] in self?.hide() },
+            onSnap: { [weak self] in self?.snap() },
+            onToggleNavigator: { [weak self] in self?.onToggleNavigator?() },
+            onToggleControlPanel: { [weak self] in self?.toggleControlPanel() },
+            onToggleLibrary: { [weak self] in self?.onToggleLibrary?() },
+            onTogglePreferences: { [weak self] in self?.onTogglePreferences?() }
+        ))
+        host.sizingOptions = [.intrinsicContentSize]
+        host.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(host)
+        NSLayoutConstraint.activate([
+            host.topAnchor.constraint(equalTo: container.topAnchor),
+            host.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+        ])
+        // never let the window shrink below the control row's width, so no control is ever clipped.
+        panel.minSize = NSSize(
+            width: max(PrompterPanelConfiguration.minSize.width, host.fittingSize.width),
+            height: PrompterPanelConfiguration.minSize.height
+        )
+    }
+
     init(store: ScriptStore, preferences: PreferencesStore, defaults: UserDefaults = .standard) {
         let viewModel = PrompterViewModel(store: store, preferences: preferences)
         self.viewModel = viewModel
         visibilityStore = PrompterVisibilityStore(defaults: defaults)
 
-        let hostingView = PrompterHostingView(rootView: PrompterContentView(
-            viewModel: viewModel,
-            onClose: {},
-            onSnap: {},
-            onToggleNavigator: {},
-            onToggleControlPanel: {},
-            onToggleLibrary: {},
-            onTogglePreferences: {}
-        ))
-        // clear the default sizing options so SwiftUI's intrinsic size never feeds the window.
-        hostingView.sizingOptions = []
-        // host the SwiftUI view inside a plain container that is the panel's content view, filling it via
-        // autoresizing. as a *direct* content view, NSHostingView sized the panel to the script's full
-        // rendered height and looped AppKit's constraint passes until it threw; behind a container the
-        // window size is owned only by snap-to-notch and user resizing, never by the content.
+        // behind a plain container (not a direct content view) the window size is owned only by
+        // snap-to-notch and user resizing, never by the SwiftUI content's intrinsic height.
         let container = NSView(frame: NSRect(origin: .zero, size: Self.defaultPanelSize))
-        hostingView.translatesAutoresizingMaskIntoConstraints = true
-        hostingView.autoresizingMask = [.width, .height]
-        hostingView.frame = container.bounds
+
+        // the text body fills the container.
+        let hostingView = Self.makeHostingView(PrompterContentView(viewModel: viewModel), frame: container.bounds)
         container.addSubview(hostingView)
+
         let panel = PrompterPanel(contentView: container)
         panel.setContentSize(Self.defaultPanelSize)
         // let the user drag the overlay anywhere on its background; never makes the panel key.
@@ -69,24 +99,21 @@ final class PrompterWindowController: NSObject {
 
         super.init()
 
-        // restore the last user-set size before first show so the overlay reopens at its remembered
-        // dimensions; the hosting view fills the container via autoresizing, so it tracks the new size.
-        if let savedSize = visibilityStore.size {
-            panel.setContentSize(savedSize)
-        }
         // become the panel's delegate so user resizes are persisted via windowDidEndLiveResize.
         panel.delegate = self
 
-        // rebuild the content with controls wired now that self is fully initialized.
-        hostingView.rootView = PrompterContentView(
-            viewModel: viewModel,
-            onClose: { [weak self] in self?.hide() },
-            onSnap: { [weak self] in self?.snap() },
-            onToggleNavigator: { [weak self] in self?.onToggleNavigator?() },
-            onToggleControlPanel: { [weak self] in self?.toggleControlPanel() },
-            onToggleLibrary: { [weak self] in self?.onToggleLibrary?() },
-            onTogglePreferences: { [weak self] in self?.onTogglePreferences?() }
-        )
+        // host the control row above the text body, pinned to the top-right (see installControlsHost);
+        // this also raises the panel's minimum width to fit the row.
+        installControlsHost(in: container)
+
+        // restore the last user-set size so the overlay reopens at its remembered dimensions, clamped to
+        // the minimum so no control is clipped; the hosting views track the new size via layout.
+        if let savedSize = visibilityStore.size {
+            panel.setContentSize(CGSize(
+                width: max(savedSize.width, panel.minSize.width),
+                height: max(savedSize.height, panel.minSize.height)
+            ))
+        }
 
         observeScreenChanges()
     }

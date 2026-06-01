@@ -8,16 +8,12 @@
 
 import SwiftUI
 
-/// prompter rendering: the current script text on a translucent dark background,
-/// with a subtle progress bar and an always-visible control row in the top-right corner.
+/// prompter rendering: the current script text on a translucent dark background, with a subtle progress
+/// bar and the countdown / voice overlays. the top-right control row is not here: it lives in a separate
+/// top-most hosting view (see PrompterControlsView) so it can never be hidden by the scroll-catcher's
+/// native subview inside the text view.
 struct PrompterContentView: View {
     let viewModel: PrompterViewModel
-    let onClose: () -> Void
-    let onSnap: () -> Void
-    let onToggleNavigator: () -> Void
-    let onToggleControlPanel: () -> Void
-    let onToggleLibrary: () -> Void
-    let onTogglePreferences: () -> Void
 
     var body: some View {
         PrompterBodyView(viewModel: viewModel)
@@ -29,17 +25,6 @@ struct PrompterContentView: View {
             }
             .overlay(alignment: .bottom) {
                 PrompterProgressBar(progress: viewModel.progress)
-            }
-            .overlay(alignment: .topTrailing) {
-                PrompterControlsView(
-                    viewModel: viewModel,
-                    onClose: onClose,
-                    onSnap: onSnap,
-                    onToggleNavigator: onToggleNavigator,
-                    onToggleControlPanel: onToggleControlPanel,
-                    onToggleLibrary: onToggleLibrary,
-                    onTogglePreferences: onTogglePreferences
-                )
             }
             .overlay(alignment: .topLeading) {
                 if viewModel.isVoiceModeEnabled {
@@ -67,58 +52,5 @@ private struct PrompterBodyView: View {
         } else {
             PrompterTextView(viewModel: viewModel)
         }
-    }
-}
-
-/// the always-visible control row over the prompter: playback, font size, the window toggles
-/// (set navigator, mini controls, library, preferences), snap-to-notch and close.
-private struct PrompterControlsView: View {
-    let viewModel: PrompterViewModel
-    let onClose: () -> Void
-    let onSnap: () -> Void
-    let onToggleNavigator: () -> Void
-    let onToggleControlPanel: () -> Void
-    let onToggleLibrary: () -> Void
-    let onTogglePreferences: () -> Void
-
-    private var isPlaying: Bool {
-        viewModel.scrollEngine.state == .playing
-    }
-
-    var body: some View {
-        HStack {
-            Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
-                viewModel.playPause()
-            }
-            Button("Restart", systemImage: "arrow.counterclockwise") {
-                viewModel.restart()
-            }
-            Button("Slower", systemImage: "tortoise") {
-                viewModel.decreaseSpeed()
-            }
-            Button("Faster", systemImage: "hare") {
-                viewModel.increaseSpeed()
-            }
-            Button("Smaller text", systemImage: "textformat.size.smaller") {
-                viewModel.decreaseFontSize()
-            }
-            .disabled(!viewModel.canDecreaseFontSize)
-            Button("Larger text", systemImage: "textformat.size.larger") {
-                viewModel.increaseFontSize()
-            }
-            .disabled(!viewModel.canIncreaseFontSize)
-            Button("Set Navigator", systemImage: "sidebar.left") { onToggleNavigator() }
-            Button("Mini Controls", systemImage: "slider.horizontal.3") { onToggleControlPanel() }
-            Button("Library", systemImage: "books.vertical") { onToggleLibrary() }
-            Button("Preferences", systemImage: "gearshape") { onTogglePreferences() }
-            Button("Snap to Notch", systemImage: "arrow.up.to.line", action: onSnap)
-            Button("Close", systemImage: "xmark", action: onClose)
-        }
-        .labelStyle(.iconOnly)
-        .buttonStyle(.plain)
-        .foregroundStyle(.white.opacity(0.9))
-        .padding(8)
-        .background(.black.opacity(0.55), in: .rect(cornerRadius: 8))
-        .padding(6)
     }
 }

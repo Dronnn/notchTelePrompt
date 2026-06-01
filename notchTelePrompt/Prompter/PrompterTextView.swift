@@ -52,18 +52,13 @@ struct PrompterTextView: View {
                     dimOpacity: Self.dimVeilOpacity
                 )
             }
-            .background {
-                // wheel / trackpad scrolling routed into the engine as manual nudges. kept as a
-                // background (not an overlay) so its native nsview is promoted to the BOTTOM of the
-                // hosting view's appkit z-order. as an overlay the representable's native subview
-                // composites above the swiftui backing layer and occludes the top-right controls and
-                // progress overlays, making them invisible. plain text / vstack above it do not handle
-                // scrollWheel, so the event still routes down the responder chain to the catcher.
+            .clipped()
+            .overlay {
+                // wheel / trackpad scrolling routed into the engine as manual nudges.
                 ScrollWheelCatcher { delta in
                     engine.nudge(by: delta)
                 }
             }
-            .clipped()
             .background {
                 // measure the prompter window's height (the actual allocated size, not the screen);
                 // feeds the centring offset and the engine. updates as the window is resized.
