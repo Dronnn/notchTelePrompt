@@ -19,8 +19,14 @@ enum PrompterPanelConfiguration {
     static let windowLevel: NSWindow.Level = .statusBar
 
     /// .borderless removes all chrome; .nonactivatingPanel keeps the panel from activating the app
-    /// when it is ordered front or clicked, so the user's frontmost app stays active.
-    static let styleMask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel]
+    /// when it is ordered front or clicked, so the user's frontmost app stays active; .resizable lets
+    /// the user drag any edge or corner to resize, like a normal window (resize tracking is frame-level,
+    /// so it works even though the panel is borderless and never becomes key).
+    static let styleMask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel, .resizable]
+
+    /// smallest the user can shrink the overlay to; keeps at least one readable line visible and stops
+    /// the window from collapsing to nothing. maxSize stays unbounded — snap-to-notch clamps to the screen.
+    static let minSize = NSSize(width: 240, height: 64)
 
     /// .fullScreenAuxiliary keeps the panel visible over full-screen apps; .stationary stops Mission
     /// Control from grouping or moving it. the panel stays on the current Space (no .canJoinAllSpaces);
@@ -55,6 +61,7 @@ enum PrompterPanelConfiguration {
         panel.backgroundColor = .clear
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
+        panel.minSize = minSize
         apply(sharingType: defaultSharingType, to: panel)
     }
 

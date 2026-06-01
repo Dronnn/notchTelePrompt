@@ -14,7 +14,7 @@ import SwiftUI
 /// keeps the last-shown script so the overlay can be reopened after a close.
 @MainActor
 final class PrompterWindowController: NSObject {
-    /// default overlay size; one source of truth so positioning and reset stay consistent.
+    /// the overlay's size on first show; afterwards the user can resize it freely by dragging an edge.
     private static let defaultPanelSize = CGSize(width: 640, height: 120)
 
     private let panel: PrompterPanel
@@ -35,6 +35,9 @@ final class PrompterWindowController: NSObject {
             onClose: {},
             onSnap: {}
         ))
+        // don't let SwiftUI's intrinsic sizing drive the window's content min/max size; the panel's own
+        // minSize and free user resizing should govern, so clear the default .standardBounds options.
+        hostingView.sizingOptions = []
         let panel = PrompterPanel(contentView: hostingView)
         panel.setContentSize(Self.defaultPanelSize)
         // let the user drag the overlay anywhere on its background; never makes the panel key.
@@ -99,8 +102,9 @@ final class PrompterWindowController: NSObject {
             return
         }
         let metrics = DisplayProvider.metrics(for: screen)
-        // always start from the preferred size so a cap on a small display doesn't shrink later snaps.
-        let frame = PrompterFrameCalculator.frame(in: metrics, size: Self.defaultPanelSize)
+        // preserve the current (possibly user-resized) size and only reposition under the notch;
+        // the calculator clamps to the visible frame so an oversized window still fits.
+        let frame = PrompterFrameCalculator.frame(in: metrics, size: panel.frame.size)
         panel.setFrame(frame, display: true)
     }
 

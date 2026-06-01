@@ -29,6 +29,27 @@ struct PrompterPanelConfigurationTests {
         #expect(makePanel().styleMask.contains(.nonactivatingPanel))
     }
 
+    @Test
+    func panelStyleMaskContainsResizable() {
+        #expect(makePanel().styleMask.contains(.resizable))
+    }
+
+    @Test
+    func panelStyleMaskOmitsTitleBarChrome() {
+        // .borderless is raw value 0, so assert the chrome masks are absent to catch accidental chrome.
+        let mask = makePanel().styleMask
+        #expect(mask.contains(.titled) == false)
+        #expect(mask.contains(.closable) == false)
+        #expect(mask.contains(.miniaturizable) == false)
+    }
+
+    // MARK: - Minimum Size
+
+    @Test
+    func panelHasMinimumSize() {
+        #expect(makePanel().minSize == PrompterPanelConfiguration.minSize)
+    }
+
     // MARK: - Level
 
     @Test
