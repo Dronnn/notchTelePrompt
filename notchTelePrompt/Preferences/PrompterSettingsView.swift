@@ -48,6 +48,11 @@ private struct PrompterTextSettingsSection: View {
             ) {
                 Text("Font Size")
             }
+            // the slider's label closure already exposes "Font Size"; expose the size in points.
+            .accessibilityValue(
+                Text(preferencesStore.prompterDefaults.fontSize, format: .number.precision(.fractionLength(0)))
+                    + Text(" pt")
+            )
             LabeledContent("Font Size") {
                 Text(preferencesStore.prompterDefaults.fontSize, format: .number.precision(.fractionLength(0)))
                     + Text(" pt")
@@ -75,6 +80,13 @@ private struct PrompterBackgroundSettingsSection: View {
             Slider(value: $preferencesStore.prompterDefaults.backgroundOpacity, in: 0 ... 1) {
                 Text("Opacity")
             }
+            // the slider's label closure already exposes "Opacity"; expose the level as a percent value.
+            .accessibilityValue(
+                Text(
+                    preferencesStore.prompterDefaults.backgroundOpacity,
+                    format: .percent.precision(.fractionLength(0))
+                )
+            )
             LabeledContent("Opacity") {
                 Text(
                     preferencesStore.prompterDefaults.backgroundOpacity,
@@ -96,6 +108,11 @@ private struct PrompterReadingSettingsSection: View {
             Slider(value: $preferencesStore.prompterDefaults.lineSpacing, in: 0 ... 24, step: 1) {
                 Text("Line Spacing")
             }
+            // the slider's label closure already exposes "Line Spacing"; expose the spacing in points.
+            .accessibilityValue(
+                Text(preferencesStore.prompterDefaults.lineSpacing, format: .number.precision(.fractionLength(0)))
+                    + Text(" pt")
+            )
             LabeledContent("Line Spacing") {
                 Text(preferencesStore.prompterDefaults.lineSpacing, format: .number.precision(.fractionLength(0)))
                     + Text(" pt")
@@ -107,6 +124,11 @@ private struct PrompterReadingSettingsSection: View {
             ) {
                 Text("Scroll Speed")
             }
+            // the slider's label closure already exposes "Scroll Speed"; expose the speed in WPM.
+            .accessibilityValue(
+                Text(preferencesStore.prompterDefaults.scrollSpeed, format: .number.precision(.fractionLength(0)))
+                    + Text(" WPM")
+            )
             LabeledContent("Scroll Speed") {
                 Text(preferencesStore.prompterDefaults.scrollSpeed, format: .number.precision(.fractionLength(0)))
                     + Text(" WPM")

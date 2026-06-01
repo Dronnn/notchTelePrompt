@@ -27,6 +27,10 @@ struct VoiceSettingsView: View {
                 } maximumValueLabel: {
                     Text("High")
                 }
+                // the slider's label closure already exposes "Sensitivity"; expose the level as a percent value.
+                .accessibilityValue(
+                    Text(preferencesStore.voiceSensitivity, format: .percent.precision(.fractionLength(0)))
+                )
                 Text("Higher sensitivity picks up quieter speech, but may react to background noise.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -38,6 +42,12 @@ struct VoiceSettingsView: View {
                 LabeledContent("Silence delay") {
                     HStack {
                         Slider(value: $preferencesStore.silenceDelay, in: 0.2 ... 3.0, step: 0.1)
+                            // this slider has no label closure, so name it and expose the delay in seconds.
+                            .accessibilityLabel(Text("Silence delay"))
+                            .accessibilityValue(
+                                Text(preferencesStore.silenceDelay, format: .number.precision(.fractionLength(1)))
+                                    + Text(" s")
+                            )
                         Text(preferencesStore.silenceDelay, format: .number.precision(.fractionLength(1)))
                             + Text(" s")
                     }
