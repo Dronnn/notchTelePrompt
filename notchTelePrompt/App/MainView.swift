@@ -21,6 +21,7 @@ struct MainView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
 
     private let modelContainer: ModelContainer
+    private let preferencesStore: PreferencesStore
     private let onStartPrompter: ((Script) -> Void)?
     private let onSupport: (() -> Void)?
 
@@ -40,6 +41,7 @@ struct MainView: View {
         _importExportViewModel = State(initialValue: importExportViewModel)
         _setsViewModel = State(initialValue: setsViewModel)
         modelContainer = environment.modelContainer
+        preferencesStore = environment.preferencesStore
         self.onStartPrompter = onStartPrompter
         self.onSupport = onSupport
     }
@@ -93,6 +95,7 @@ struct MainView: View {
             }
         }
         .modelContainer(modelContainer)
+        .environment(\.locale, preferencesStore.appLanguage.locale)
         .sheet(isPresented: .init(get: { !hasSeenWelcome }, set: { _ in })) {
             WelcomeView()
         }

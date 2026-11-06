@@ -26,8 +26,13 @@ final class ScriptEditorViewModel {
 
     private(set) var wordCount = 0
     private(set) var charCount = 0
-    private(set) var readingTime = "0 min"
     private(set) var isDirty = false
+
+    /// recomputed on read so switching the app language updates the footer without a relaunch.
+    var readingTime: String {
+        ReadingTimeHelper.readingTime(wordCount: wordCount, wpm: wpm)
+    }
+
     var errorMessage: String?
 
     /// the single global prompter font size in points; the editor's +/- control shares this with the
@@ -89,7 +94,6 @@ final class ScriptEditorViewModel {
     private func updateStats() {
         wordCount = ReadingTimeHelper.wordCount(in: text)
         charCount = ReadingTimeHelper.characterCount(in: text)
-        readingTime = ReadingTimeHelper.readingTime(wordCount: wordCount, wpm: wpm)
     }
 
     // MARK: - Saving

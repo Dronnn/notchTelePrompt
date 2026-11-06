@@ -103,7 +103,7 @@ final class ImportExportService {
 
     private func suggestedName(title: String, format: ExportFormat) -> String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let base = trimmed.isEmpty ? String(localized: "Untitled") : trimmed
+        let base = trimmed.isEmpty ? AppLocalization.string("Untitled") : trimmed
         return "\(base).\(format.fileExtension)"
     }
 }

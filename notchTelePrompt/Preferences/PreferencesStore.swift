@@ -19,17 +19,19 @@ final class PreferencesStore {
 
     var appLanguage: AppLanguage = .system {
         didSet {
-            defaults.set(appLanguage.rawValue, forKey: Key.appLanguage)
+            guard appLanguage != oldValue else {
+                return
+            }
+            defaults.set(appLanguage.rawValue, forKey: AppLanguage.defaultsKey)
+            // keep system-owned UI in the same language on the next launch; app-owned text is relocalized
+            // live through AppLocalization and the SwiftUI locale. "System default" clears the override.
             if appLanguage == .system {
                 defaults.removeObject(forKey: "AppleLanguages")
             } else {
                 defaults.set([appLanguage.rawValue], forKey: "AppleLanguages")
             }
+            NotificationCenter.default.post(name: .appLanguageDidChange, object: nil)
         }
-    }
-
-    var requiresLanguageRestart: Bool {
-        appLanguage != startupLanguage
     }
 
     var showDockIcon = false {
@@ -93,16 +95,13 @@ final class PreferencesStore {
     }
 
     @ObservationIgnored private let defaults: UserDefaults
-    @ObservationIgnored private let startupLanguage: AppLanguage
     @ObservationIgnored private let logger = Logger(subsystem: "com.notchTelePrompt", category: "preferences")
 
     // MARK: - Lifecycle
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        let savedLanguage = defaults.string(forKey: Key.appLanguage).flatMap(AppLanguage.init(rawValue:)) ?? .system
-        startupLanguage = savedLanguage
-        appLanguage = savedLanguage
+        appLanguage = defaults.string(forKey: AppLanguage.defaultsKey).flatMap(AppLanguage.init(rawValue:)) ?? .system
 
         if defaults.object(forKey: Key.showDockIcon) != nil {
             showDockIcon = defaults.bool(forKey: Key.showDockIcon)
@@ -150,7 +149,6 @@ final class PreferencesStore {
     // MARK: - Keys
 
     private enum Key {
-        static let appLanguage = "preferences.appLanguage"
         static let showDockIcon = "preferences.showDockIcon"
         static let restoreLastScript = "preferences.restoreLastScript"
         static let openEditorOnLaunch = "preferences.openEditorOnLaunch"

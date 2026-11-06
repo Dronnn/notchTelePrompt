@@ -16,7 +16,7 @@ struct ScriptRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(script.title.isEmpty ? "Untitled" : script.title)
+                Text(script.title.isEmpty ? AppLocalization.string("Untitled") : script.title)
                     .lineLimit(1)
                 Text(script.updatedAt, format: .dateTime.day().month().year())
                     .font(.caption)

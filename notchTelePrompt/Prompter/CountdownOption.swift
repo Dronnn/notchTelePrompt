@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// pre-start countdown durations offered by the prompter (spec §17): off, 3, 5 or 10 seconds.
 nonisolated enum CountdownOption: CaseIterable, Identifiable {
@@ -34,16 +35,16 @@ nonisolated enum CountdownOption: CaseIterable, Identifiable {
     }
 
     /// a short label for the preferences picker.
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .off:
-            String(localized: "Off")
+            "Off"
         case .three:
-            String(localized: "3s")
+            "3s"
         case .five:
-            String(localized: "5s")
+            "5s"
         case .ten:
-            String(localized: "10s")
+            "10s"
         }
     }
 

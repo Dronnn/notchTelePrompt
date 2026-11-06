@@ -40,13 +40,6 @@ enum PrompterPanelConfiguration {
     /// value and may ignore it, so exclusion is not guaranteed and must be verified per system / recorder.
     static let defaultSharingType: NSWindow.SharingType = .none
 
-    /// honest disclosure of the limits of capture exclusion, surfaced in preferences from phase 10.
-    static let captureExclusionDisclosure = String(localized: """
-    NotchPrompter requests capture exclusion for all its windows. This is a legacy system hint, \
-    and macOS or sharing apps may still capture them. Share a specific application window and \
-    verify your recording setup before relying on capture exclusion.
-    """)
-
     // MARK: - Configuration
 
     /// applies all overlay window traits to the panel; transparency is set so the hosted SwiftUI view

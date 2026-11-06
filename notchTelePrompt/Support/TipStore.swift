@@ -58,11 +58,11 @@ final class TipStore {
             let loaded = try await Product.products(for: Self.productIDs)
             products = loaded.sorted { $0.price < $1.price }
             if loaded.isEmpty {
-                productsErrorMessage = String(localized: "Donations are unavailable right now.")
+                productsErrorMessage = AppLocalization.string("Donations are unavailable right now.")
             }
         } catch {
             products = []
-            productsErrorMessage = String(localized: "Donations are unavailable right now.")
+            productsErrorMessage = AppLocalization.string("Donations are unavailable right now.")
         }
     }
 

@@ -12,4 +12,6 @@ extension Notification.Name {
     /// posted when the script editor's text surface appears or is replaced, so the main window can
     /// reapply its Finder drop-target configuration to the newly created NSTextView.
     static let scriptEditorDidAppear = Notification.Name("scriptEditorDidAppear")
+    /// posted when the app language changes, so AppKit chrome can relocalize immediately.
+    static let appLanguageDidChange = Notification.Name("appLanguageDidChange")
 }

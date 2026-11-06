@@ -31,6 +31,21 @@ final class PreferencesWindowController: NSObject, NSWindowDelegate {
         self.scriptStore = scriptStore
         self.tipStore = tipStore
         super.init()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appLanguageDidChange),
+            name: .appLanguageDidChange,
+            object: nil
+        )
+    }
+
+    @objc
+    private func appLanguageDidChange() {
+        window?.title = AppLocalization.string("Preferences")
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     // MARK: - Presentation
@@ -75,7 +90,7 @@ final class PreferencesWindowController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = String(localized: "Preferences")
+        window.title = AppLocalization.string("Preferences")
         window.identifier = AppWindowPlacement.preferencesIdentifier
         window.isMovableByWindowBackground = true
         window.contentMinSize = NSSize(width: 460, height: 360)

@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 /// sort options for listing scripts.
 enum ScriptSortOrder: CaseIterable {
@@ -18,7 +19,7 @@ enum ScriptSortOrder: CaseIterable {
     case titleAscending
 
     /// human-readable label for sort pickers.
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .createdDescending: "Newest"
         case .createdAscending: "Oldest"

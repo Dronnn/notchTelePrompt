@@ -20,6 +20,9 @@ final class PrompterWindowController: NSObject {
     private let panel: PrompterPanel
     private let viewModel: PrompterViewModel
     private let visibilityStore: PrompterVisibilityStore
+    private let preferences: PreferencesStore
+    private var dragHandle: WindowDragHandleView?
+    private var resizeHandle: WindowResizeHandleView?
 
     /// local key-event monitor for the overlay's font shortcuts; installed only while the overlay is visible.
     private var fontKeyMonitor: Any?
@@ -58,16 +61,18 @@ final class PrompterWindowController: NSObject {
     /// window-background drags reach the text host beneath. layered above the text host, it also clears the
     /// scroll-catcher's native subview, which composites above any sibling swiftui overlay in the text host.
     private func installControlsHost(in container: NSView) {
-        let host = PrompterHostingView(rootView: PrompterControlsView(
-            viewModel: viewModel,
-            onClose: { [weak self] in self?.hide() },
-            onSnap: { [weak self] in self?.snap() },
-            onToggleNavigator: { [weak self] in self?.onToggleNavigator?() },
-            onToggleControlPanel: { [weak self] in self?.toggleControlPanel() },
-            onToggleLibrary: { [weak self] in self?.onToggleLibrary?() },
-            onTogglePreferences: { [weak self] in self?.onTogglePreferences?() },
-            onSupport: { [weak self] in self?.onSupport?() }
-        ))
+        let host = PrompterHostingView(rootView: AppLanguageRoot(preferencesStore: preferences) {
+            PrompterControlsView(
+                viewModel: viewModel,
+                onClose: { [weak self] in self?.hide() },
+                onSnap: { [weak self] in self?.snap() },
+                onToggleNavigator: { [weak self] in self?.onToggleNavigator?() },
+                onToggleControlPanel: { [weak self] in self?.toggleControlPanel() },
+                onToggleLibrary: { [weak self] in self?.onToggleLibrary?() },
+                onTogglePreferences: { [weak self] in self?.onTogglePreferences?() },
+                onSupport: { [weak self] in self?.onSupport?() }
+            )
+        })
         host.sizingOptions = [.intrinsicContentSize]
         host.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(host)
@@ -85,6 +90,7 @@ final class PrompterWindowController: NSObject {
     init(store: ScriptStore, preferences: PreferencesStore, defaults: UserDefaults = .standard) {
         let viewModel = PrompterViewModel(store: store, preferences: preferences)
         self.viewModel = viewModel
+        self.preferences = preferences
         visibilityStore = PrompterVisibilityStore(defaults: defaults)
 
         // behind a plain container (not a direct content view) the window size is owned only by
@@ -94,17 +100,22 @@ final class PrompterWindowController: NSObject {
         let container = PrompterFileDropContainerView(frame: NSRect(origin: .zero, size: Self.defaultPanelSize))
 
         // the text body fills the container.
-        let hostingView = Self.makeHostingView(PrompterContentView(viewModel: viewModel), frame: container.bounds)
+        let hostingView = Self.makeHostingView(
+            AppLanguageRoot(preferencesStore: preferences) { PrompterContentView(viewModel: viewModel) },
+            frame: container.bounds
+        )
         container.addSubview(hostingView)
 
         // the non-interactive chrome (countdown, progress bar, voice indicator) sits in its own host above
         // the text body, so the scroll-catcher's native subview can't hide it; hit-testing is off in the
         // chrome's swiftui content, so scroll and clicks pass straight through to the text body beneath.
-        let chromeHost = Self.makeHostingView(PrompterChromeView(viewModel: viewModel), frame: container.bounds)
+        let chromeHost = Self.makeHostingView(
+            AppLanguageRoot(preferencesStore: preferences) { PrompterChromeView(viewModel: viewModel) },
+            frame: container.bounds
+        )
         container.addSubview(chromeHost)
 
         let panel = PrompterPanel(contentView: container)
-        panel.title = String(localized: "Prompter")
         panel.setContentSize(Self.defaultPanelSize)
         // let the user drag the overlay anywhere on its background; never makes the panel key.
         panel.isMovableByWindowBackground = true
@@ -129,6 +140,7 @@ final class PrompterWindowController: NSObject {
         installControlsHost(in: container)
         installWindowHandles(in: container)
         container.stripDescendantFileURLRegistrations()
+        observeLanguageChanges()
 
         // restore the last user-set size so the overlay reopens at its remembered dimensions, clamped to
         // the minimum so no control is clipped; the hosting views track the new size via layout.
@@ -155,21 +167,44 @@ final class PrompterWindowController: NSObject {
             x: (container.bounds.width - 36) / 2, y: 2, width: 36, height: 14
         ))
         dragHandle.autoresizingMask = [.minXMargin, .maxXMargin, .maxYMargin]
-        dragHandle.toolTip = String(localized: "Drag to move the prompter")
-        dragHandle.setAccessibilityLabel(String(localized: "Move prompter"))
+        self.dragHandle = dragHandle
         container.addSubview(dragHandle)
 
         let resizeHandle = WindowResizeHandleView(frame: NSRect(
             x: container.bounds.width - 22, y: 0, width: 22, height: 22
         ))
         resizeHandle.autoresizingMask = [.minXMargin, .maxYMargin]
-        resizeHandle.toolTip = String(localized: "Drag to resize the prompter")
-        resizeHandle.setAccessibilityLabel(String(localized: "Resize prompter"))
+        self.resizeHandle = resizeHandle
         resizeHandle.onResizeEnd = { [weak self] in
             guard let self else { return }
             visibilityStore.setSize(panel.frame.size)
         }
         container.addSubview(resizeHandle)
+    }
+
+    /// applies the current language to the AppKit-owned chrome and keeps it in sync afterwards.
+    private func observeLanguageChanges() {
+        applyLocalizedChrome()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appLanguageDidChange),
+            name: .appLanguageDidChange,
+            object: nil
+        )
+    }
+
+    /// relocalizes the AppKit-owned panel title, tooltips and accessibility labels after a language change.
+    private func applyLocalizedChrome() {
+        panel.title = AppLocalization.string("Prompter")
+        dragHandle?.toolTip = AppLocalization.string("Drag to move the prompter")
+        dragHandle?.setAccessibilityLabel(AppLocalization.string("Move prompter"))
+        resizeHandle?.toolTip = AppLocalization.string("Drag to resize the prompter")
+        resizeHandle?.setAccessibilityLabel(AppLocalization.string("Resize prompter"))
+    }
+
+    @objc
+    private func appLanguageDidChange() {
+        applyLocalizedChrome()
     }
 
     func show(script: Script) {
@@ -308,7 +343,7 @@ final class PrompterWindowController: NSObject {
 
     /// the optional floating control panel; created on first use, sharing this overlay's view model.
     private lazy var controlPanelController: PrompterControlPanelController = {
-        let controller = PrompterControlPanelController(viewModel: viewModel)
+        let controller = PrompterControlPanelController(viewModel: viewModel, preferences: preferences)
         controller.onTogglePrompter = { [weak self] in self?.togglePrompterVisibility() }
         return controller
     }()

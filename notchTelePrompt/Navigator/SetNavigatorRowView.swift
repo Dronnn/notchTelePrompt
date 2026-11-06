@@ -39,6 +39,6 @@ struct SetNavigatorRowView: View {
 
     /// shows a placeholder for untitled scripts so a blank row never appears.
     private var displayTitle: String {
-        title.isEmpty ? String(localized: "Untitled") : title
+        title.isEmpty ? AppLocalization.string("Untitled") : title
     }
 }

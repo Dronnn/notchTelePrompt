@@ -14,11 +14,15 @@ final class SupportWindowController: NSObject, NSWindowDelegate {
     private let window: NSWindow
     private let store: TipStore
 
-    init(store: TipStore) {
+    init(store: TipStore, preferences: PreferencesStore) {
         self.store = store
-        window = NSWindow(contentViewController: NSHostingController(rootView: SupportView(store: store)))
+        window = NSWindow(contentViewController: NSHostingController(
+            rootView: AppLanguageRoot(preferencesStore: preferences) {
+                SupportView(store: store)
+            }
+        ))
         super.init()
-        window.title = String(localized: "Support NotchPrompter")
+        window.title = AppLocalization.string("Support NotchPrompter")
         window.identifier = AppWindowPlacement.supportIdentifier
         window.styleMask = [.titled, .closable, .resizable]
         window.isMovableByWindowBackground = true
@@ -27,6 +31,17 @@ final class SupportWindowController: NSObject, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.center()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appLanguageDidChange),
+            name: .appLanguageDidChange,
+            object: nil
+        )
+    }
+
+    @objc
+    private func appLanguageDidChange() {
+        window.title = AppLocalization.string("Support NotchPrompter")
     }
 
     func show() {
@@ -46,5 +61,9 @@ final class SupportWindowController: NSObject, NSWindowDelegate {
 
     func windowWillClose(_: Notification) {
         store.dismissFeedback()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }

@@ -68,7 +68,7 @@ final class MainWindowController: NSObject, NSWindowDelegate {
             defer: false
         )
         window.contentView = container
-        window.title = String(localized: "NotchPrompter")
+        window.title = AppLocalization.string("NotchPrompter")
         window.identifier = AppWindowPlacement.libraryIdentifier
         window.isMovableByWindowBackground = true
         window.setContentSize(NSSize(width: 900, height: 600))

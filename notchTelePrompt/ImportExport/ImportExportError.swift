@@ -19,13 +19,13 @@ enum ImportExportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noTextInClipboard:
-            String(localized: "Clipboard does not contain text.")
+            AppLocalization.string("Clipboard does not contain text.")
         case let .unreadableFile(underlying):
-            String(localized: "This file couldn't be read. \(underlying.localizedDescription)")
+            AppLocalization.string("This file couldn't be read. \(underlying.localizedDescription)")
         case .unencodableText:
-            String(localized: "This text couldn't be read as UTF-8.")
+            AppLocalization.string("This text couldn't be read as UTF-8.")
         case let .exportFailed(underlying):
-            String(localized: "The file couldn't be written. \(underlying.localizedDescription)")
+            AppLocalization.string("The file couldn't be written. \(underlying.localizedDescription)")
         }
     }
 }

@@ -75,7 +75,7 @@ final class ImportExportViewModel {
     /// exports the library's currently selected script; used by the menu-bar Export command.
     func exportSelectedScript(format: ExportFormat = .txt) async {
         guard let script = libraryViewModel.selectedScript else {
-            errorMessage = String(localized: "Select a script to export.")
+            errorMessage = AppLocalization.string("Select a script to export.")
             return
         }
         await exportScript(script, format: format)
@@ -212,7 +212,7 @@ final class ImportExportViewModel {
             .components(separatedBy: illegal)
             .joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let base = sanitized.isEmpty ? String(localized: "Untitled") : sanitized
+        let base = sanitized.isEmpty ? AppLocalization.string("Untitled") : sanitized
 
         var candidate = base
         var index = 2

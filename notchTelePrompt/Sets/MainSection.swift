@@ -6,7 +6,7 @@
 //  Copyright © 2026 Andreas Maier. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 /// the two top-level areas of the main window: the script library/editor, or the prompt sets editor.
 /// the sidebar switches between them with a segmented control.
@@ -18,7 +18,7 @@ enum MainSection: String, CaseIterable, Identifiable {
         self
     }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .library: "Library"
         case .sets: "Sets"

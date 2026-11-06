@@ -30,7 +30,7 @@ struct NotchPrompterApp: App {
         .modelContainer(appDelegate.environment.modelContainer)
         .commands {
             CommandGroup(replacing: .appSettings) {
-                Button("Preferences…") {
+                Button(AppLocalization.string("Preferences…")) {
                     appDelegate.showPreferences()
                 }
                 .keyboardShortcut(",", modifiers: .command)

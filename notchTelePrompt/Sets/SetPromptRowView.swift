@@ -18,7 +18,7 @@ struct SetPromptRowView: View {
             Text(position, format: .number)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-            Text(script.title.isEmpty ? "Untitled" : script.title)
+            Text(script.title.isEmpty ? AppLocalization.string("Untitled") : script.title)
                 .lineLimit(1)
         }
     }

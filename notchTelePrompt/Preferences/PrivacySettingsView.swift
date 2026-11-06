@@ -18,16 +18,20 @@ struct PrivacySettingsView: View {
         Form {
             Section("Your data") {
                 Text(
-                    "Your scripts and any voice analysis stay on this Mac. "
-                        + "Nothing is uploaded: there is no account and no analytics."
+                    """
+                    Your scripts and any voice analysis stay on this Mac. Nothing is uploaded: \
+                    there is no account and no analytics.
+                    """
                 )
                 .foregroundStyle(.secondary)
             }
 
             Section("Screen capture") {
                 Text(
-                    "NotchPrompter requests capture exclusion for all its windows, but macOS and sharing apps "
-                        + "may still capture them. Share a specific application window and check your recording setup."
+                    """
+                    NotchPrompter requests capture exclusion for all its windows, but macOS and sharing apps \
+                    may still capture them. Share a specific application window and check your recording setup.
+                    """
                 )
                 .foregroundStyle(.secondary)
             }

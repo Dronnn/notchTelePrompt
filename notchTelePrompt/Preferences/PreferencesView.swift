@@ -38,6 +38,7 @@ struct PreferencesView: View {
             )
         }
         .frame(minWidth: 460, minHeight: 360)
+        .environment(\.locale, preferencesStore.appLanguage.locale)
     }
 }
 

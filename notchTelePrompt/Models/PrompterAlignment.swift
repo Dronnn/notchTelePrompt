@@ -6,7 +6,7 @@
 //  Copyright © 2026 Andreas Maier. All rights reserved.
 //
 
-import Foundation
+import SwiftUI
 
 /// horizontal alignment of the prompter text.
 nonisolated enum PrompterAlignment: String, Codable, CaseIterable, Identifiable {
@@ -18,7 +18,7 @@ nonisolated enum PrompterAlignment: String, Codable, CaseIterable, Identifiable 
         self
     }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .left: "Left"
         case .center: "Center"

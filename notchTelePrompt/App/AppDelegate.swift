@@ -23,7 +23,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var setsViewModel: SetsViewModel?
     private let shortcuts = ShortcutsController()
     private let capturePrivacy = WindowCapturePrivacyController()
-    private lazy var support = SupportWindowController(store: environment.tipStore)
+    private lazy var support = SupportWindowController(
+        store: environment.tipStore,
+        preferences: environment.preferencesStore
+    )
     private lazy var preferences = PreferencesWindowController(
         preferencesStore: environment.preferencesStore,
         scriptStore: environment.scriptStore,
@@ -63,7 +66,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let navigator = SetNavigatorWindowController(
             promptSetStore: environment.promptSetStore,
-            scriptStore: environment.scriptStore
+            scriptStore: environment.scriptStore,
+            preferences: environment.preferencesStore
         )
         // selecting a prompt in the floating navigator shows it in the prompter, just like Start Prompter.
         navigator.onSelectScript = { [weak self] script in self?.showPrompter(script) }
@@ -255,7 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         components.scheme = "mailto"
         components.path = "dddron_am@icloud.com"
         components.queryItems = [
-            URLQueryItem(name: "subject", value: "NotchPrompter feedback")
+            URLQueryItem(name: "subject", value: AppLocalization.string("NotchPrompter feedback"))
         ]
         guard let url = components.url else {
             return
@@ -276,7 +280,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = String(localized: "Export")
+        panel.prompt = AppLocalization.string("Export")
 
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let directory = panel.url else {
@@ -298,11 +302,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = String(localized: "Clear local data?")
-        alert.informativeText = String(localized: "Delete all scripts and prompt sets? This can't be undone.")
-        let deleteButton = alert.addButton(withTitle: String(localized: "Delete"))
+        alert.messageText = AppLocalization.string("Clear local data?")
+        alert.informativeText = AppLocalization.string("Delete all scripts and prompt sets? This can't be undone.")
+        let deleteButton = alert.addButton(withTitle: AppLocalization.string("Delete"))
         deleteButton.hasDestructiveAction = true
-        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.addButton(withTitle: AppLocalization.string("Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
         }
@@ -328,8 +332,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func presentClearDataFailedAlert() {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = String(localized: "Couldn't clear all data")
-        alert.informativeText = String(localized: "Some data couldn't be deleted. Please try again.")
+        alert.messageText = AppLocalization.string("Couldn't clear all data")
+        alert.informativeText = AppLocalization.string("Some data couldn't be deleted. Please try again.")
         alert.runModal()
     }
 
@@ -337,7 +341,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func presentExportAllFailedAlert(message: String) {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = String(localized: "Couldn't export all scripts")
+        alert.messageText = AppLocalization.string("Couldn't export all scripts")
         alert.informativeText = message
         alert.runModal()
     }
@@ -346,12 +350,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func presentMicrophoneDeniedAlert() {
         NSApplication.shared.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = String(localized: "Microphone access is off")
+        alert.messageText = AppLocalization.string("Microphone access is off")
         alert.informativeText = String(
             localized: "Voice-follow needs microphone access. Open System Settings to turn it on, then try again."
         )
-        alert.addButton(withTitle: String(localized: "Open System Settings"))
-        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.addButton(withTitle: AppLocalization.string("Open System Settings"))
+        alert.addButton(withTitle: AppLocalization.string("Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
         }
@@ -365,7 +369,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func presentMicrophoneUnavailableAlert() {
         NSApplication.shared.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = String(localized: "Microphone is unavailable")
+        alert.messageText = AppLocalization.string("Microphone is unavailable")
         alert.informativeText = String(
             localized: "NotchPrompter couldn't start the microphone. It may be in use by another app."
         )

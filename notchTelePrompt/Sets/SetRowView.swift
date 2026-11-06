@@ -17,7 +17,7 @@ struct SetRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(set.name.isEmpty ? "Untitled Set" : set.name)
+                Text(set.name.isEmpty ? AppLocalization.string("Untitled Set") : set.name)
                     .lineLimit(1)
                 Text(set.scriptIDs.count, format: .number)
                     .font(.caption)

@@ -24,19 +24,19 @@ nonisolated enum ReadingTimeHelper {
     }
 
     /// human-readable reading time estimate for a word count at the given words-per-minute.
-    static func readingTime(wordCount: Int, wpm: Int = 150) -> String {
+    static func readingTime(wordCount: Int, wpm: Int = 150, language: AppLanguage = .current) -> String {
         guard wordCount > 0 else {
-            return "0 min"
+            return AppLocalization.string("0 min", language: language)
         }
         let totalSeconds = Int(Double(wordCount) / Double(max(wpm, 1)) * 60)
         guard totalSeconds >= 60 else {
-            return "< 1 min"
+            return AppLocalization.string("< 1 min", language: language)
         }
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
         if seconds == 0 {
-            return "\(minutes) min"
+            return AppLocalization.string("\(minutes) min", language: language)
         }
-        return "\(minutes) min \(seconds) s"
+        return AppLocalization.string("\(minutes) min \(seconds) s", language: language)
     }
 }

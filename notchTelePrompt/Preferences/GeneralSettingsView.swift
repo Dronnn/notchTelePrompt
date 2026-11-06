@@ -23,11 +23,6 @@ struct GeneralSettingsView: View {
                         Text(verbatim: language.title).tag(language)
                     }
                 }
-                if preferencesStore.requiresLanguageRestart {
-                    Text("Reopen NotchPrompter to apply language changes.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
 
             Section("Startup") {

@@ -31,13 +31,15 @@ final class SetNavigatorWindowController: NSObject {
         set { viewModel.onSelectScript = newValue }
     }
 
-    init(promptSetStore: PromptSetStore, scriptStore: ScriptStore) {
+    init(promptSetStore: PromptSetStore, scriptStore: ScriptStore, preferences: PreferencesStore) {
         let viewModel = SetNavigatorViewModel(promptSetStore: promptSetStore, scriptStore: scriptStore)
         self.viewModel = viewModel
 
         var forwardClose: (() -> Void)?
         let hostingView = PrompterHostingView(
-            rootView: SetNavigatorView(viewModel: viewModel, onClose: { forwardClose?() })
+            rootView: AppLanguageRoot(preferencesStore: preferences) {
+                SetNavigatorView(viewModel: viewModel) { forwardClose?() }
+            }
         )
         // don't let SwiftUI's intrinsic sizing drive the window's content min/max size; the panel's own
         // minSize and free user resizing should govern, so clear the default .standardBounds options.

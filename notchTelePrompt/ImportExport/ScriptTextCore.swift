@@ -44,8 +44,10 @@ nonisolated enum ScriptTextCore {
             .first { !$0.isEmpty }
 
         guard let firstNonEmpty else {
-            let date = fallbackDate.formatted(.dateTime.day().month(.abbreviated).year())
-            return String(localized: "Script – \(date)")
+            let date = fallbackDate.formatted(
+                .dateTime.day().month(.abbreviated).year().locale(AppLocalization.language.locale)
+            )
+            return AppLocalization.string("Script – \(date)")
         }
 
         guard firstNonEmpty.count > maxTitleLength else {

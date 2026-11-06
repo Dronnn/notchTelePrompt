@@ -56,13 +56,33 @@ final class MenuBarController: NSObject {
     override init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
+        rebuildMenu()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appLanguageDidChange),
+            name: .appLanguageDidChange,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    // MARK: - Setup
+
+    /// rebuilds the status menu so every AppKit title follows the selected app language.
+    private func rebuildMenu() {
         configureButton()
         let menu = makeMenu()
         menu.delegate = self
         statusItem.menu = menu
     }
 
-    // MARK: - Setup
+    @objc
+    private func appLanguageDidChange() {
+        rebuildMenu()
+    }
 
     private func configureButton() {
         guard let button = statusItem.button else {
@@ -70,7 +90,7 @@ final class MenuBarController: NSObject {
         }
         let image = NSImage(
             systemSymbolName: "text.alignleft",
-            accessibilityDescription: String(localized: "NotchPrompter")
+            accessibilityDescription: AppLocalization.string("NotchPrompter")
         )
         image?.isTemplate = true
         button.image = image
@@ -80,29 +100,35 @@ final class MenuBarController: NSObject {
         let menu = NSMenu()
         addScriptItems(to: menu)
         menu.addItem(.separator())
-        menu.addItem(menuItem(title: String(localized: "Show Library"), action: #selector(showLibrary)))
-        let showPrompterItem = menuItem(title: String(localized: "Show Prompter"), action: #selector(showPrompter))
+        menu.addItem(menuItem(title: AppLocalization.string("Show Library"), action: #selector(showLibrary)))
+        let showPrompterItem = menuItem(title: AppLocalization.string("Show Prompter"), action: #selector(showPrompter))
         showPrompterItem.setShortcut(for: .togglePrompter)
         self.showPrompterItem = showPrompterItem
         menu.addItem(showPrompterItem)
-        menu.addItem(menuItem(title: String(localized: "Snap Prompter to Notch"), action: #selector(snapToNotch)))
+        menu.addItem(menuItem(title: AppLocalization.string("Snap Prompter to Notch"), action: #selector(snapToNotch)))
         let showNavigatorItem = menuItem(
-            title: String(localized: "Show Set Navigator"),
+            title: AppLocalization.string("Show Set Navigator"),
             action: #selector(toggleNavigator)
         )
         self.showNavigatorItem = showNavigatorItem
         menu.addItem(showNavigatorItem)
         addPlaybackItems(to: menu)
         menu.addItem(.separator())
-        menu.addItem(menuItem(title: String(localized: "Preferences…"), action: #selector(openPreferences)))
-        let supportItem = menuItem(title: String(localized: "Support NotchPrompter"), action: #selector(showSupport))
+        menu.addItem(menuItem(title: AppLocalization.string("Preferences…"), action: #selector(openPreferences)))
+        let supportItem = menuItem(
+            title: AppLocalization.string("Support NotchPrompter"),
+            action: #selector(showSupport)
+        )
         supportItem.image = NSImage(systemSymbolName: "heart", accessibilityDescription: nil)
         menu.addItem(supportItem)
-        let emailItem = menuItem(title: String(localized: "Email the Developer…"), action: #selector(emailDeveloper))
+        let emailItem = menuItem(
+            title: AppLocalization.string("Email the Developer…"),
+            action: #selector(emailDeveloper)
+        )
         emailItem.image = NSImage(systemSymbolName: "envelope", accessibilityDescription: nil)
         menu.addItem(emailItem)
         menu.addItem(.separator())
-        menu.addItem(menuItem(title: String(localized: "Quit NotchPrompter"), action: #selector(quit)))
+        menu.addItem(menuItem(title: AppLocalization.string("Quit NotchPrompter"), action: #selector(quit)))
         for item in menu.items where item.action != nil {
             item.target = self
         }
@@ -112,21 +138,21 @@ final class MenuBarController: NSObject {
     /// adds the script-management group: new, import, paste-as-script and export, with their local
     /// key equivalents.
     private func addScriptItems(to menu: NSMenu) {
-        menu.addItem(menuItem(title: String(localized: "New Script"), action: #selector(newScript)))
+        menu.addItem(menuItem(title: AppLocalization.string("New Script"), action: #selector(newScript)))
         menu.addItem(menuItem(
-            title: String(localized: "Import…"),
+            title: AppLocalization.string("Import…"),
             action: #selector(importScript),
             keyEquivalent: "i",
             modifiers: [.command, .shift]
         ))
         menu.addItem(menuItem(
-            title: String(localized: "Paste as Script"),
+            title: AppLocalization.string("Paste as Script"),
             action: #selector(pasteClipboard),
             keyEquivalent: "v",
             modifiers: [.command, .shift]
         ))
         menu.addItem(menuItem(
-            title: String(localized: "Export…"),
+            title: AppLocalization.string("Export…"),
             action: #selector(exportScript),
             keyEquivalent: "e",
             modifiers: [.command]
@@ -137,23 +163,23 @@ final class MenuBarController: NSObject {
     /// toggle. start/pause and restart mirror their global hotkeys via setShortcut so the menu stays in sync.
     private func addPlaybackItems(to menu: NSMenu) {
         menu.addItem(.separator())
-        let startPauseItem = menuItem(title: String(localized: "Start"), action: #selector(startPause))
+        let startPauseItem = menuItem(title: AppLocalization.string("Start"), action: #selector(startPause))
         startPauseItem.setShortcut(for: .startPausePrompter)
         self.startPauseItem = startPauseItem
         menu.addItem(startPauseItem)
-        let restartItem = menuItem(title: String(localized: "Restart"), action: #selector(restart))
+        let restartItem = menuItem(title: AppLocalization.string("Restart"), action: #selector(restart))
         restartItem.setShortcut(for: .restartPrompter)
         menu.addItem(restartItem)
-        menu.addItem(menuItem(title: String(localized: "Stop"), action: #selector(stop)))
-        let voiceItem = menuItem(title: String(localized: "Start Voice Follow"), action: #selector(toggleVoice))
+        menu.addItem(menuItem(title: AppLocalization.string("Stop"), action: #selector(stop)))
+        let voiceItem = menuItem(title: AppLocalization.string("Start Voice Follow"), action: #selector(toggleVoice))
         self.voiceItem = voiceItem
         menu.addItem(voiceItem)
-        let recentItem = NSMenuItem(title: String(localized: "Open Recent"), action: nil, keyEquivalent: "")
+        let recentItem = NSMenuItem(title: AppLocalization.string("Open Recent"), action: nil, keyEquivalent: "")
         recentItem.submenu = NSMenu()
         recentMenuItem = recentItem
         menu.addItem(recentItem)
         let showControlPanelItem = menuItem(
-            title: String(localized: "Show Mini Controls"),
+            title: AppLocalization.string("Show Mini Controls"),
             action: #selector(toggleControlPanel)
         )
         self.showControlPanelItem = showControlPanelItem
@@ -285,21 +311,21 @@ extension MenuBarController: NSMenuDelegate {
     func menuNeedsUpdate(_: NSMenu) {
         let prompterVisible = isPrompterVisible?() ?? false
         showPrompterItem?.title = prompterVisible
-            ? String(localized: "Hide Prompter")
-            : String(localized: "Show Prompter")
+            ? AppLocalization.string("Hide Prompter")
+            : AppLocalization.string("Show Prompter")
         let navigatorVisible = isNavigatorVisible?() ?? false
         showNavigatorItem?.title = navigatorVisible
-            ? String(localized: "Hide Set Navigator")
-            : String(localized: "Show Set Navigator")
+            ? AppLocalization.string("Hide Set Navigator")
+            : AppLocalization.string("Show Set Navigator")
         startPauseItem?.title = (isPrompterPlaying?() ?? false)
-            ? String(localized: "Pause")
-            : String(localized: "Start")
+            ? AppLocalization.string("Pause")
+            : AppLocalization.string("Start")
         voiceItem?.title = (isVoiceEnabled?() ?? false)
-            ? String(localized: "Stop Voice Follow")
-            : String(localized: "Start Voice Follow")
+            ? AppLocalization.string("Stop Voice Follow")
+            : AppLocalization.string("Start Voice Follow")
         showControlPanelItem?.title = (isControlPanelVisible?() ?? false)
-            ? String(localized: "Hide Mini Controls")
-            : String(localized: "Show Mini Controls")
+            ? AppLocalization.string("Hide Mini Controls")
+            : AppLocalization.string("Show Mini Controls")
         rebuildRecentMenu()
     }
 
@@ -311,13 +337,13 @@ extension MenuBarController: NSMenuDelegate {
         submenu.removeAllItems()
         let scripts = recentScripts?() ?? []
         guard !scripts.isEmpty else {
-            let empty = NSMenuItem(title: String(localized: "No Recent Scripts"), action: nil, keyEquivalent: "")
+            let empty = NSMenuItem(title: AppLocalization.string("No Recent Scripts"), action: nil, keyEquivalent: "")
             empty.isEnabled = false
             submenu.addItem(empty)
             return
         }
         for script in scripts {
-            let title = script.title.isEmpty ? String(localized: "Untitled Script") : script.title
+            let title = script.title.isEmpty ? AppLocalization.string("Untitled Script") : script.title
             let item = NSMenuItem(title: title, action: #selector(selectRecent(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = script

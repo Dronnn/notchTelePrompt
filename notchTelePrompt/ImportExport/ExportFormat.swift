@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// the supported export file formats, with their file extensions and uniform type identifiers.
@@ -31,10 +32,10 @@ enum ExportFormat: CaseIterable {
         }
     }
 
-    var localizedLabel: String {
+    var localizedLabel: LocalizedStringKey {
         switch self {
-        case .txt: String(localized: "Plain Text (.txt)")
-        case .md: String(localized: "Markdown (.md)")
+        case .txt: "Plain Text (.txt)"
+        case .md: "Markdown (.md)"
         }
     }
 }
