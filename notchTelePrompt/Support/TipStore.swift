@@ -24,6 +24,10 @@ final class TipStore {
     ]
 
     private(set) var feedback: TipFeedback?
+    /// products loaded from the App Store or the local StoreKit test configuration.
+    private(set) var products: [Product] = []
+    private(set) var isLoadingProducts = false
+    private(set) var productsErrorMessage: String?
 
     @ObservationIgnored private var observerTask: Task<Void, Never>?
     @ObservationIgnored private var handledTransactionIDs: Set<UInt64> = []
@@ -40,6 +44,26 @@ final class TipStore {
 
     deinit {
         observerTask?.cancel()
+    }
+
+    // MARK: - Products
+
+    /// loads the tip catalog for the support screen. an empty catalog is surfaced to the user
+    /// rather than leaving the donation screen blank.
+    func loadProducts() async {
+        isLoadingProducts = true
+        productsErrorMessage = nil
+        defer { isLoadingProducts = false }
+        do {
+            let loaded = try await Product.products(for: Self.productIDs)
+            products = loaded.sorted { $0.price < $1.price }
+            if loaded.isEmpty {
+                productsErrorMessage = String(localized: "Donations are unavailable right now.")
+            }
+        } catch {
+            products = []
+            productsErrorMessage = String(localized: "Donations are unavailable right now.")
+        }
     }
 
     // MARK: - Purchase feedback

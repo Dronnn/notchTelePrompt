@@ -16,15 +16,29 @@ struct SupportView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             SupportIntroduction()
-            StoreView(ids: TipStore.productIDs)
-                .storeButton(.hidden, for: .restorePurchases)
-                .onInAppPurchaseStart { _ in
-                    store.dismissFeedback()
+            Group {
+                if store.isLoadingProducts, store.products.isEmpty {
+                    ProgressView("Loading donations…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let message = store.productsErrorMessage, store.products.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(message)
+                            .foregroundStyle(.secondary)
+                        Button("Try Again") {
+                            Task { await store.loadProducts() }
+                        }
+                    }
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(store.products, id: \.id) { product in
+                                SupportProductRow(product: product, store: store)
+                            }
+                        }
+                    }
                 }
-                .onInAppPurchaseCompletion { product, result in
-                    await store.handlePurchaseResult(result, for: product)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             if let feedback = store.feedback {
                 SupportFeedbackView(feedback: feedback)
             }
@@ -32,6 +46,49 @@ struct SupportView: View {
         .frame(maxWidth: 560, maxHeight: .infinity, alignment: .topLeading)
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .task {
+            await store.loadProducts()
+        }
+    }
+}
+
+/// one tip product with its storefront price. using explicit rows keeps the donation screen
+/// populated even when the system store view has no layout space in a preferences pane.
+private struct SupportProductRow: View {
+    let product: Product
+    let store: TipStore
+
+    @State private var isPurchasing = false
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.displayName)
+                    .font(.headline)
+                Text(product.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 12)
+            Button(product.displayPrice) {
+                Task { await purchase() }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isPurchasing)
+        }
+        .padding(12)
+        .background(.quaternary.opacity(0.45), in: .rect(cornerRadius: 8))
+    }
+
+    private func purchase() async {
+        isPurchasing = true
+        defer { isPurchasing = false }
+        do {
+            let result = try await product.purchase()
+            await store.handlePurchaseResult(.success(result), for: product)
+        } catch {
+            await store.handlePurchaseResult(.failure(error), for: product)
+        }
     }
 }
 

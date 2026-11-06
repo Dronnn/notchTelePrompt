@@ -20,6 +20,35 @@ final class PrompterPanel: NSPanel {
         )
         self.contentView = contentView
         PrompterPanelConfiguration.apply(to: self)
+        registerForDraggedTypes([.fileURL])
+    }
+
+    // MARK: - File drop
+
+    /// NSWindow is a candidate destination once registered for dragged types. the content view is
+    /// normally the destination, but a nonactivating borderless panel can offer the drop to the window.
+    @objc
+    func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        dropContainer?.draggingEntered(sender) ?? []
+    }
+
+    @objc
+    func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        dropContainer?.draggingUpdated(sender) ?? []
+    }
+
+    @objc
+    func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        dropContainer?.prepareForDragOperation(sender) ?? false
+    }
+
+    @objc
+    func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        dropContainer?.performDragOperation(sender) ?? false
+    }
+
+    private var dropContainer: PrompterFileDropContainerView? {
+        contentView as? PrompterFileDropContainerView
     }
 
     // MARK: - Focus

@@ -76,7 +76,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../notchTelePromptTests/Resources/TipJar.storekit">
+         identifier = "../notchTelePrompt/Resources/TipJar.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction

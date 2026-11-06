@@ -39,6 +39,18 @@ struct TipJarTests {
     }
 
     @Test
+    func tipStoreLoadsTheDonationCatalog() async throws {
+        try await withSession { _ in
+            let store = TipStore()
+            await store.loadProducts()
+
+            #expect(store.products.count == TipStore.productIDs.count)
+            #expect(store.productsErrorMessage == nil)
+            #expect(store.products.map(\.id).sorted() == TipStore.productIDs.sorted())
+        }
+    }
+
+    @Test
     func runSchemeReferencesTheLocalStoreKitConfiguration() throws {
         let repositoryRoot = URL(filePath: #filePath)
             .deletingLastPathComponent()
@@ -60,7 +72,7 @@ struct TipJarTests {
         )
         let resolved = URL(filePath: identifier, relativeTo: projectDirectory).standardizedFileURL
         let configurationURL = repositoryRoot
-            .appending(path: "notchTelePromptTests/Resources/TipJar.storekit")
+            .appending(path: "notchTelePrompt/Resources/TipJar.storekit")
             .standardizedFileURL
 
         #expect(resolved == configurationURL)
@@ -182,14 +194,9 @@ struct TipJarTests {
     }
 
     private static var configurationURL: URL {
-        guard let url = Bundle(for: TipJarTestsBundleToken.self)
-            .url(forResource: "TipJar", withExtension: "storekit")
-        else {
-            fatalError("TipJar.storekit is missing from the test bundle")
+        guard let url = Bundle.main.url(forResource: "TipJar", withExtension: "storekit") else {
+            fatalError("TipJar.storekit is missing from the app bundle")
         }
         return url
     }
 }
-
-/// gives Bundle(for:) a concrete class whose bundle is the test bundle.
-private final class TipJarTestsBundleToken: NSObject {}

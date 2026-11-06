@@ -15,8 +15,6 @@ import AppKit
 final class PrompterFileDropContainerView: NSView {
     var onDropFileURL: ((URL) -> Bool)?
 
-    private static let acceptedExtensions = Set(ExportFormat.allCases.map(\.fileExtension))
-
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         registerForDraggedTypes([.fileURL])
@@ -73,8 +71,6 @@ final class PrompterFileDropContainerView: NSView {
             forClasses: [NSURL.self],
             options: options
         ) as? [NSURL]
-        return objects?
-            .compactMap { $0 as URL }
-            .first { Self.acceptedExtensions.contains($0.pathExtension.lowercased()) }
+        return objects?.first.map { $0 as URL }
     }
 }
