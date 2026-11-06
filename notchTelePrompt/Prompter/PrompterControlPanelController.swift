@@ -89,7 +89,7 @@ final class PrompterControlPanelController: NSObject {
         let size = panel.frame.size
         let x = visibleFrame.midX - size.width / 2
         let y = visibleFrame.minY + Self.bottomMargin
-        panel.setFrame(CGRect(x: x, y: y, width: size.width, height: size.height), display: true)
+        AppWindowPlacement.place(panel, preferredFrame: CGRect(x: x, y: y, width: size.width, height: size.height))
     }
 
     // MARK: - Screen Changes

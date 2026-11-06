@@ -74,7 +74,11 @@ struct LibraryView: View {
             "Couldn't complete that action",
             isPresented: Binding(
                 get: { viewModel.errorMessage != nil },
-                set: { if !$0 { viewModel.errorMessage = nil } }
+                set: {
+                    if !$0 {
+                        viewModel.errorMessage = nil
+                    }
+                }
             )
         ) {
             Button("OK", role: .cancel) {}

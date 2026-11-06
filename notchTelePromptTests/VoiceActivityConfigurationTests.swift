@@ -16,9 +16,12 @@ struct VoiceActivityConfigurationTests {
     @Test
     func midSensitivityMatchesDetectorDefaults() {
         let config = VoiceActivityConfiguration.make(sensitivity: 0.5, silenceDelay: 1.0)
-        let tolerance: Float = 0.0001
-        #expect(abs(config.speechThreshold - 0.05) < tolerance)
-        #expect(abs(config.silenceThreshold - 0.02) < tolerance)
+        let detector = VoiceActivityDetector()
+        let tolerance: Float = 0.000001
+        #expect(abs(config.speechThreshold - 0.005) < tolerance)
+        #expect(abs(config.silenceThreshold - 0.002) < tolerance)
+        #expect(abs(config.speechThreshold - detector.speechThreshold) < tolerance)
+        #expect(abs(config.silenceThreshold - detector.silenceThreshold) < tolerance)
         #expect(config.silenceDelay == 1.0)
     }
 

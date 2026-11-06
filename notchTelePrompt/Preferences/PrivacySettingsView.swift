@@ -26,8 +26,8 @@ struct PrivacySettingsView: View {
 
             Section("Screen capture") {
                 Text(
-                    "The overlay asks macOS to keep it out of screen recordings and sharing. "
-                        + "This is best-effort and can't be guaranteed in every third-party app."
+                    "NotchPrompter requests capture exclusion for all its windows, but macOS and sharing apps "
+                        + "may still capture them. Share a specific application window and check your recording setup."
                 )
                 .foregroundStyle(.secondary)
             }

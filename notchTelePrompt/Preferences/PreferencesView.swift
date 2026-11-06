@@ -13,6 +13,7 @@ import SwiftUI
 struct PreferencesView: View {
     let preferencesStore: PreferencesStore
     let scriptStore: ScriptStore
+    let tipStore: TipStore
     /// invoked by the privacy pane; the actual work lives in the app delegate.
     var onExportAllScripts: () -> Void = {}
     var onClearLocalData: () -> Void = {}
@@ -31,6 +32,7 @@ struct PreferencesView: View {
                 pane: selection,
                 preferencesStore: preferencesStore,
                 scriptStore: scriptStore,
+                tipStore: tipStore,
                 onExportAllScripts: onExportAllScripts,
                 onClearLocalData: onClearLocalData
             )
@@ -45,6 +47,7 @@ private struct PreferenceDetailView: View {
     let pane: PreferencePane
     let preferencesStore: PreferencesStore
     let scriptStore: ScriptStore
+    let tipStore: TipStore
     let onExportAllScripts: () -> Void
     let onClearLocalData: () -> Void
 
@@ -64,6 +67,8 @@ private struct PreferenceDetailView: View {
                     onExportAllScripts: onExportAllScripts,
                     onClearLocalData: onClearLocalData
                 )
+            case .support:
+                SupportView(store: tipStore)
             }
         }
         .frame(minWidth: 280, minHeight: 320)

@@ -80,7 +80,7 @@ final class VoiceEngine {
             forName: .AVAudioEngineConfigurationChange,
             object: engine,
             queue: nil
-        ) { [weak self] _ in
+        ) { @Sendable [weak self] _ in
             Task { @MainActor in
                 self?.handleConfigurationChange()
             }
@@ -136,22 +136,19 @@ final class VoiceEngine {
         }
         detector.reset()
         let input = engine.inputNode
-        let format = input.inputFormat(forBus: 0)
+        let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
             authorizationStatus = .unavailable
             wantsRunning = false
             onUnavailable?()
             return
         }
-        let generation = captureGeneration
-        input.installTap(onBus: 0, bufferSize: 4_096, format: format) { buffer, _ in
-            let level = Self.rms(from: buffer)
-            // stamp on the audio thread so the silence debounce isn't skewed by main-actor delivery lag.
-            let timestamp = CACurrentMediaTime()
-            Task { @MainActor [weak self] in
-                self?.ingest(level: level, at: timestamp, generation: generation)
-            }
-        }
+        input.installTap(
+            onBus: 0,
+            bufferSize: 4_096,
+            format: format,
+            block: makeInputTap(generation: captureGeneration)
+        )
         isTapInstalled = true
         engine.prepare()
         do {
@@ -162,6 +159,18 @@ final class VoiceEngine {
             isRunning = false
             wantsRunning = false
             onUnavailable?()
+        }
+    }
+
+    /// the tap runs on an audio thread; Sendable prevents it from inheriting main-actor isolation.
+    func makeInputTap(generation: Int) -> @Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void {
+        { @Sendable [weak self] buffer, _ in
+            let level = Self.rms(from: buffer)
+            // stamp on the audio thread so the silence debounce isn't skewed by main-actor delivery lag.
+            let timestamp = CACurrentMediaTime()
+            Task { @MainActor [weak self] in
+                self?.ingest(level: level, at: timestamp, generation: generation)
+            }
         }
     }
 

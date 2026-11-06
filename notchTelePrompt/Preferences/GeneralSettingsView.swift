@@ -17,6 +17,19 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
+            Section("Language") {
+                Picker("App language", selection: Bindable(preferencesStore).appLanguage) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(verbatim: language.title).tag(language)
+                    }
+                }
+                if preferencesStore.requiresLanguageRestart {
+                    Text("Reopen NotchPrompter to apply language changes.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Startup") {
                 Toggle("Launch NotchPrompter at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in

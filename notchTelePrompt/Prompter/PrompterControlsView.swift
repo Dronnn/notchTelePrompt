@@ -23,6 +23,7 @@ struct PrompterControlsView: View {
     let onToggleControlPanel: () -> Void
     let onToggleLibrary: () -> Void
     let onTogglePreferences: () -> Void
+    let onSupport: () -> Void
 
     private var isPlaying: Bool {
         viewModel.scrollEngine.state == .playing
@@ -60,6 +61,7 @@ struct PrompterControlsView: View {
             Button("Mini Controls", systemImage: "slider.horizontal.3") { onToggleControlPanel() }
             Button("Library", systemImage: "books.vertical") { onToggleLibrary() }
             Button("Preferences", systemImage: "gearshape") { onTogglePreferences() }
+            Button("Support NotchPrompter", systemImage: "heart", action: onSupport)
             Button("Snap to Notch", systemImage: "arrow.up.to.line", action: onSnap)
             Button("Close", systemImage: "xmark", action: onClose)
         }

@@ -21,10 +21,28 @@ struct VoiceActivityDetectorTests {
 
     @Test
     func sustainZoneDoesNotStartSpeaking() {
-        var detector = VoiceActivityDetector()
+        var detector = VoiceActivityDetector(speechThreshold: 0.05, silenceThreshold: 0.02)
         // a level between the thresholds must not start speaking on its own.
         let speaking = detector.update(level: 0.03, at: 0)
         #expect(!speaking)
+    }
+
+    @Test
+    func defaultConfigurationDetectsQuietSpeechAndIgnoresBackgroundNoise() {
+        var detector = VoiceActivityDetector()
+        detector.apply(.default)
+
+        let background = detector.update(level: 0.0004, at: 0)
+        let speech = detector.update(level: 0.01, at: 0.1)
+        #expect(!background)
+        #expect(speech)
+        // background levels after speech keep the short pause debounce, then return to silence.
+        let shortPause = detector.update(level: 0.0004, at: 0.5)
+        let silence = detector.update(level: 0.0004, at: 1.2)
+        let continuedBackground = detector.update(level: 0.0004, at: 1.3)
+        #expect(shortPause)
+        #expect(!silence)
+        #expect(!continuedBackground)
     }
 
     // MARK: - Silence delay debounce
@@ -55,7 +73,7 @@ struct VoiceActivityDetectorTests {
 
     @Test
     func sustainZoneKeepsSpeakingAndResetsTimer() {
-        var detector = VoiceActivityDetector()
+        var detector = VoiceActivityDetector(speechThreshold: 0.05, silenceThreshold: 0.02)
         let started = detector.update(level: 0.1, at: 0)
         #expect(started)
         // levels between the thresholds keep speaking alive and reset the silence timer each time.

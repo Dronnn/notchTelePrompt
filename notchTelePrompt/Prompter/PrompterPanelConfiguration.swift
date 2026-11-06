@@ -42,10 +42,9 @@ enum PrompterPanelConfiguration {
 
     /// honest disclosure of the limits of capture exclusion, surfaced in preferences from phase 10.
     static let captureExclusionDisclosure = String(localized: """
-    The prompter overlay requests best-effort exclusion from screen capture (NSWindow.sharingType = .none). \
-    On some systems it may be hidden from certain native capture paths, but macOS does not guarantee this. \
-    Depending on your macOS version and the recording or virtual-camera app (including Screenshot and \
-    QuickTime Player), the overlay may still be captured. Verify with your own setup before relying on it.
+    NotchPrompter requests capture exclusion for all its windows. This is a legacy system hint, \
+    and macOS or sharing apps may still capture them. Share a specific application window and \
+    verify your recording setup before relying on capture exclusion.
     """)
 
     // MARK: - Configuration

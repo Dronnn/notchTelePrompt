@@ -15,17 +15,27 @@ struct SetNavigatorView: View {
     let viewModel: SetNavigatorViewModel
 
     var body: some View {
-        Group {
-            if viewModel.activeSet == nil {
-                SetNavigatorEmptyView(message: Text("No active set"))
-            } else if viewModel.scripts.isEmpty {
-                SetNavigatorEmptyView(message: Text("This set is empty"))
-            } else {
-                SetNavigatorListView(viewModel: viewModel)
+        VStack(spacing: 0) {
+            WindowDragHandle()
+                .frame(width: 44, height: 14)
+                .accessibilityLabel("Move set navigator")
+            Group {
+                if viewModel.activeSet == nil {
+                    SetNavigatorEmptyView(message: Text("No active set"))
+                } else if viewModel.scripts.isEmpty {
+                    SetNavigatorEmptyView(message: Text("This set is empty"))
+                } else {
+                    SetNavigatorListView(viewModel: viewModel)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.black.opacity(0.82))
+        // decorative only: letting empty areas fall through to the hosting view keeps the panel
+        // movable by dragging anywhere that is not an interactive row or control.
+        .background {
+            Color.black.opacity(0.82).allowsHitTesting(false)
+        }
+        .background(WindowDragArea())
         .foregroundStyle(.white)
         .clipShape(.rect(cornerRadius: 8))
     }

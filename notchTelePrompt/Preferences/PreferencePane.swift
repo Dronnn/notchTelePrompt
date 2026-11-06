@@ -15,6 +15,7 @@ enum PreferencePane: String, CaseIterable, Identifiable {
     case voice
     case shortcuts
     case privacy
+    case support
 
     var id: String {
         rawValue
@@ -27,6 +28,7 @@ enum PreferencePane: String, CaseIterable, Identifiable {
         case .voice: "Voice"
         case .shortcuts: "Shortcuts"
         case .privacy: "Privacy"
+        case .support: "Support"
         }
     }
 
@@ -37,6 +39,7 @@ enum PreferencePane: String, CaseIterable, Identifiable {
         case .voice: "mic"
         case .shortcuts: "command"
         case .privacy: "lock.shield"
+        case .support: "heart"
         }
     }
 }

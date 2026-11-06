@@ -18,6 +18,7 @@ final class AppEnvironment {
     let scriptStore: ScriptStore
     let promptSetStore: PromptSetStore
     let preferencesStore = PreferencesStore()
+    let tipStore = TipStore()
 
     init() {
         do {

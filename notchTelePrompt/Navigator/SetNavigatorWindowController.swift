@@ -116,7 +116,7 @@ final class SetNavigatorWindowController: NSObject {
         )
         let x = visibleFrame.minX
         let y = min(max(visibleFrame.midY - size.height / 2, visibleFrame.minY), visibleFrame.maxY - size.height)
-        panel.setFrame(CGRect(x: x, y: y, width: size.width, height: size.height), display: true)
+        AppWindowPlacement.place(panel, preferredFrame: CGRect(x: x, y: y, width: size.width, height: size.height))
     }
 
     // MARK: - Screen Changes

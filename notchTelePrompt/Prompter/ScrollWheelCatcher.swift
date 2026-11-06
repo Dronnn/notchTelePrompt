@@ -40,17 +40,16 @@ final class ScrollWheelCatchingView: NSView {
         onScroll?(-event.scrollingDeltaY)
     }
 
-    /// keep hitTest's default so scroll events still route here, but forward mouse clicks/drags to the
-    /// responder chain so the controls stay tappable and window-background dragging still works.
+    override var mouseDownCanMoveWindow: Bool {
+        true
+    }
+
+    override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
+        true
+    }
+
+    /// start a native window drag directly; forwarding through the hosting view can consume the event.
     override func mouseDown(with event: NSEvent) {
-        nextResponder?.mouseDown(with: event)
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        nextResponder?.mouseDragged(with: event)
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        nextResponder?.mouseUp(with: event)
+        window?.performDrag(with: event)
     }
 }

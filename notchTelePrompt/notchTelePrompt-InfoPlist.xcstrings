@@ -1,0 +1,114 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "notchTelePrompt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter"
+          }
+        }
+      }
+    },
+    "NSHumanReadableCopyright" : {
+      "comment" : "Copyright (human-readable)",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : ""
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : ""
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : ""
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : ""
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : ""
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "comment" : "Privacy - Microphone Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter verwendet das Mikrofon nur, um deiner Stimme zu folgen und den Text zu scrollen, während du sprichst. Audiodaten werden auf deinem Mac verarbeitet und niemals aufgenommen, gespeichert oder übertragen. Der Zugriff wird erst beim Aktivieren der Sprachsteuerung angefragt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "NotchPrompter uses the microphone only to follow your voice and scroll the prompter while you speak. Audio is processed on your Mac and never recorded, saved, or sent anywhere. This is requested only when you turn on voice-follow."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter solo utiliza el micrófono para seguir tu voz y desplazar el texto mientras hablas. El audio se procesa en el Mac y nunca se graba, se guarda ni se envía a ningún sitio. Este permiso solo se solicita al activar el seguimiento de voz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "NotchPrompter utilise le microphone uniquement pour suivre votre voix et faire défiler le texte pendant que vous parlez. Le son est traité sur votre Mac et ne fait jamais l’objet d’un enregistrement, d’une sauvegarde ou d’un envoi. Cette autorisation est demandée uniquement lorsque vous activez le suivi vocal."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "O NotchPrompter usa o microfone apenas para acompanhar sua voz e rolar o texto enquanto você fala. O Mac processa o áudio localmente, sem gravar, salvar ou enviar nada. O app só solicita essa permissão quando você ativa o acompanhamento por voz."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.3"
+}

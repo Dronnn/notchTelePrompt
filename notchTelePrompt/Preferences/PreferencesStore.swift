@@ -17,6 +17,21 @@ import OSLog
 final class PreferencesStore {
     // MARK: - General
 
+    var appLanguage: AppLanguage = .system {
+        didSet {
+            defaults.set(appLanguage.rawValue, forKey: Key.appLanguage)
+            if appLanguage == .system {
+                defaults.removeObject(forKey: "AppleLanguages")
+            } else {
+                defaults.set([appLanguage.rawValue], forKey: "AppleLanguages")
+            }
+        }
+    }
+
+    var requiresLanguageRestart: Bool {
+        appLanguage != startupLanguage
+    }
+
     var showDockIcon = false {
         didSet { defaults.set(showDockIcon, forKey: Key.showDockIcon) }
     }
@@ -78,12 +93,16 @@ final class PreferencesStore {
     }
 
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let startupLanguage: AppLanguage
     @ObservationIgnored private let logger = Logger(subsystem: "com.notchTelePrompt", category: "preferences")
 
     // MARK: - Lifecycle
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        let savedLanguage = defaults.string(forKey: Key.appLanguage).flatMap(AppLanguage.init(rawValue:)) ?? .system
+        startupLanguage = savedLanguage
+        appLanguage = savedLanguage
 
         if defaults.object(forKey: Key.showDockIcon) != nil {
             showDockIcon = defaults.bool(forKey: Key.showDockIcon)
@@ -131,6 +150,7 @@ final class PreferencesStore {
     // MARK: - Keys
 
     private enum Key {
+        static let appLanguage = "preferences.appLanguage"
         static let showDockIcon = "preferences.showDockIcon"
         static let restoreLastScript = "preferences.restoreLastScript"
         static let openEditorOnLaunch = "preferences.openEditorOnLaunch"

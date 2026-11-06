@@ -83,7 +83,11 @@ final class ImportExportService {
         do {
             data = try await Task.detached {
                 let didStart = securityScoped ? url.startAccessingSecurityScopedResource() : false
-                defer { if didStart { url.stopAccessingSecurityScopedResource() } }
+                defer {
+                    if didStart {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
                 return try Data(contentsOf: url)
             }.value
         } catch {

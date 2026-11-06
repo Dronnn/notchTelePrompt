@@ -31,6 +31,9 @@ struct PrompterControlPanelView: View {
 
     var body: some View {
         HStack {
+            WindowDragHandle()
+                .frame(width: 18, height: 18)
+                .accessibilityLabel("Move mini controls")
             Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
                 viewModel.playPause()
             }
@@ -72,7 +75,12 @@ struct PrompterControlPanelView: View {
         .foregroundStyle(.white.opacity(0.85))
         .padding(8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.black.opacity(0.82))
+        // decorative only: empty space falls through to the hosting view so the whole panel
+        // can be dragged, while the buttons keep receiving their clicks.
+        .background {
+            Color.black.opacity(0.82).allowsHitTesting(false)
+        }
+        .background(WindowDragArea())
         .clipShape(.rect(cornerRadius: 8))
     }
 }

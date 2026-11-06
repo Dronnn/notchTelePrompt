@@ -17,14 +17,14 @@ import Foundation
 ///     level has stayed below silenceThreshold for at least silenceDelay seconds.
 /// pure value type, nonisolated and testable.
 nonisolated struct VoiceActivityDetector {
-    var speechThreshold: Float = 0.05
-    var silenceThreshold: Float = 0.02
+    var speechThreshold: Float = 0.005
+    var silenceThreshold: Float = 0.002
     var silenceDelay: TimeInterval = 1.0
 
     private(set) var isSpeaking = false
     private var lastLoudTimestamp: TimeInterval?
 
-    init(speechThreshold: Float = 0.05, silenceThreshold: Float = 0.02, silenceDelay: TimeInterval = 1.0) {
+    init(speechThreshold: Float = 0.005, silenceThreshold: Float = 0.002, silenceDelay: TimeInterval = 1.0) {
         self.speechThreshold = speechThreshold
         self.silenceThreshold = silenceThreshold
         self.silenceDelay = silenceDelay

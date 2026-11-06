@@ -22,12 +22,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var libraryViewModel: LibraryViewModel?
     private var setsViewModel: SetsViewModel?
     private let shortcuts = ShortcutsController()
+    private let capturePrivacy = WindowCapturePrivacyController()
+    private lazy var support = SupportWindowController(store: environment.tipStore)
     private lazy var preferences = PreferencesWindowController(
         preferencesStore: environment.preferencesStore,
-        scriptStore: environment.scriptStore
+        scriptStore: environment.scriptStore,
+        tipStore: environment.tipStore
     )
 
     func applicationDidFinishLaunching(_: Notification) {
+        capturePrivacy.start()
         let library = LibraryViewModel(store: environment.scriptStore)
         libraryViewModel = library
         let importExportVM = ImportExportViewModel(store: environment.scriptStore, libraryViewModel: library)
@@ -43,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         mainWindowController = windowController
         windowController.onStartPrompter = { [weak self] script in self?.showPrompter(script) }
+        windowController.onSupport = { [weak self] in self?.support.show() }
 
         prompterController = PrompterWindowController(
             store: environment.scriptStore,
@@ -53,6 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         prompterController?.onToggleNavigator = { [weak self] in self?.setNavigatorController?.toggle() }
         prompterController?.onToggleLibrary = { [weak self] in self?.mainWindowController?.toggle() }
         prompterController?.onTogglePreferences = { [weak self] in self?.preferences.toggle() }
+        prompterController?.onSupport = { [weak self] in self?.support.show() }
 
         let navigator = SetNavigatorWindowController(
             promptSetStore: environment.promptSetStore,
@@ -87,10 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// shows the last-remembered script in the prompter, unless one is already showing.
     /// a missing or unknown id is ignored silently.
     private func restoreLastShownScript() {
-        guard prompterController?.isVisible == false else {
-            return
-        }
-        guard let id = environment.preferencesStore.lastShownScriptID else {
+        guard prompterController?.isVisible == false, let id = environment.preferencesStore.lastShownScriptID else {
             return
         }
         // try? on an optional-returning fetch yields Script??; flatten so a missing id is just nil.
@@ -126,6 +129,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.recentScripts = { [weak self] in self?.recentScriptsForMenu() ?? [] }
         menuBar.onShowScript = { [weak self] script in self?.showPrompter(script) }
         menuBar.onOpenPreferences = { [weak self] in self?.showPreferences() }
+        menuBar.onSupport = { [weak self] in self?.showSupport() }
+        menuBar.onEmailDeveloper = { [weak self] in self?.emailDeveloper() }
         menuBar.onImportScript = { [weak windowController, weak importExportVM] in
             windowController?.open()
             Task { await importExportVM?.importScript() }
@@ -219,15 +224,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         (try? environment.scriptStore.recent(limit: 8)) ?? []
     }
 
-    private func showPreferences() {
+    /// shared entry point for the menu bar, prompter gear, and the standard settings shortcut.
+    func showPreferences() {
         preferences.show()
+    }
+
+    /// shows the optional tips screen; shared by the editor, prompter, and preferences.
+    func showSupport() {
+        support.show()
+    }
+
+    /// opens the user's mail client with a pre-addressed, pre-subjected feedback email.
+    func emailDeveloper() {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "dddron_am@icloud.com"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "NotchPrompter feedback")
+        ]
+        guard let url = components.url else {
+            return
+        }
+        NSWorkspace.shared.open(url)
     }
 
     // MARK: - Privacy
 
     /// lets the user pick a folder, then exports every script as a .txt into it (privacy pane).
     /// runs the write in a Task so the panel returns immediately; a write failure shows a brief alert.
-    private func exportAllScripts() {
+    func exportAllScripts() {
         guard let importExportViewModel else {
             return
         }
@@ -254,7 +279,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// shows a destructive confirmation, then deletes all scripts and prompt sets and resets dependent
     /// state. on a delete failure it stays honest: a brief alert is shown and dependent state is left
     /// untouched, so a partial clear never crashes the app nor falsely claims success.
-    private func confirmAndClearLocalData() {
+    func confirmAndClearLocalData() {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
         alert.alertStyle = .warning

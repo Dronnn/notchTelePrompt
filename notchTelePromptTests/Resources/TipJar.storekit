@@ -1,0 +1,107 @@
+{
+  "identifier": "C56B4857-CF17-4014-944E-CEC9401B4741",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "D0BE659E-64BE-412B-B9A4-8079765037C8",
+      "localizations": [
+        {
+          "description": "Optional tip. No features are unlocked.",
+          "displayName": "Small tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.mrmaier.notchTelePrompt.tip.small",
+      "referenceName": "Small tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "CD368A79-01E3-4B2D-B16F-B174B28A4133",
+      "localizations": [
+        {
+          "description": "Optional tip. No features are unlocked.",
+          "displayName": "Medium tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.mrmaier.notchTelePrompt.tip.medium",
+      "referenceName": "Medium tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "7.99",
+      "familyShareable": false,
+      "internalID": "8937EB32-E550-456A-8060-F77F99E8C132",
+      "localizations": [
+        {
+          "description": "Optional tip. No features are unlocked.",
+          "displayName": "Large tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.mrmaier.notchTelePrompt.tip.large",
+      "referenceName": "Large tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "19.99",
+      "familyShareable": false,
+      "internalID": "AE6CF543-18F6-4032-8D54-5E0906A27008",
+      "localizations": [
+        {
+          "description": "Optional tip. No features are unlocked.",
+          "displayName": "Generous tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.mrmaier.notchTelePrompt.tip.generous",
+      "referenceName": "Generous tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "49.99",
+      "familyShareable": false,
+      "internalID": "52F4C1B4-71C4-404F-A6B0-E0CFE6396660",
+      "localizations": [
+        {
+          "description": "Optional tip. No features are unlocked.",
+          "displayName": "Patron tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.mrmaier.notchTelePrompt.tip.patron",
+      "referenceName": "Patron tip",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "99.99",
+      "familyShareable": false,
+      "internalID": "4AA6B5B5-1C5E-47D7-AB5F-1EDDF7B3F312",
+      "localizations": [
+        {
+          "description": "Optional tip. No features are unlocked.",
+          "displayName": "Extraordinary tip",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.mrmaier.notchTelePrompt.tip.extraordinary",
+      "referenceName": "Extraordinary tip",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

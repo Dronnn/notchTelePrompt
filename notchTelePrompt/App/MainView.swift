@@ -22,13 +22,15 @@ struct MainView: View {
 
     private let modelContainer: ModelContainer
     private let onStartPrompter: ((Script) -> Void)?
+    private let onSupport: (() -> Void)?
 
     init(
         environment: AppEnvironment,
         libraryViewModel: LibraryViewModel,
         importExportViewModel: ImportExportViewModel,
         setsViewModel: SetsViewModel,
-        onStartPrompter: ((Script) -> Void)? = nil
+        onStartPrompter: ((Script) -> Void)? = nil,
+        onSupport: (() -> Void)? = nil
     ) {
         _libraryViewModel = State(initialValue: libraryViewModel)
         _editorViewModel = State(initialValue: ScriptEditorViewModel(
@@ -39,6 +41,7 @@ struct MainView: View {
         _setsViewModel = State(initialValue: setsViewModel)
         modelContainer = environment.modelContainer
         self.onStartPrompter = onStartPrompter
+        self.onSupport = onSupport
     }
 
     var body: some View {
@@ -75,6 +78,11 @@ struct MainView: View {
                 SetDetailView(viewModel: setsViewModel)
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Support NotchPrompter", systemImage: "heart") { onSupport?() }
+            }
+        }
         .onChange(of: libraryViewModel.selectedScript) { _, newValue in
             editorViewModel.selectedScript = newValue
         }
@@ -92,7 +100,11 @@ struct MainView: View {
             "Couldn't complete that action",
             isPresented: Binding(
                 get: { importExportViewModel.errorMessage != nil },
-                set: { if !$0 { importExportViewModel.errorMessage = nil } }
+                set: {
+                    if !$0 {
+                        importExportViewModel.errorMessage = nil
+                    }
+                }
             )
         ) {
             Button("OK", role: .cancel) {}
@@ -103,7 +115,11 @@ struct MainView: View {
             "Import dropped file",
             isPresented: Binding(
                 get: { importExportViewModel.pendingDrop != nil },
-                set: { if !$0 { importExportViewModel.cancelDrop() } }
+                set: {
+                    if !$0 {
+                        importExportViewModel.cancelDrop()
+                    }
+                }
             ),
             titleVisibility: .visible
         ) {

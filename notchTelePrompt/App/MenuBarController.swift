@@ -29,6 +29,8 @@ final class MenuBarController: NSObject {
     var isVoiceEnabled: (() -> Bool)?
     var onToggleControlPanel: (() -> Void)?
     var onOpenPreferences: (() -> Void)?
+    var onSupport: (() -> Void)?
+    var onEmailDeveloper: (() -> Void)?
     var onShowScript: ((Script) -> Void)?
     /// supplies the recent scripts shown in the Open Recent submenu, rebuilt each time the menu opens.
     var recentScripts: (() -> [Script])?
@@ -93,6 +95,12 @@ final class MenuBarController: NSObject {
         addPlaybackItems(to: menu)
         menu.addItem(.separator())
         menu.addItem(menuItem(title: String(localized: "Preferences…"), action: #selector(openPreferences)))
+        let supportItem = menuItem(title: String(localized: "Support NotchPrompter"), action: #selector(showSupport))
+        supportItem.image = NSImage(systemSymbolName: "heart", accessibilityDescription: nil)
+        menu.addItem(supportItem)
+        let emailItem = menuItem(title: String(localized: "Email the Developer…"), action: #selector(emailDeveloper))
+        emailItem.image = NSImage(systemSymbolName: "envelope", accessibilityDescription: nil)
+        menu.addItem(emailItem)
         menu.addItem(.separator())
         menu.addItem(menuItem(title: String(localized: "Quit NotchPrompter"), action: #selector(quit)))
         for item in menu.items where item.action != nil {
@@ -241,6 +249,16 @@ final class MenuBarController: NSObject {
     @objc
     private func openPreferences() {
         onOpenPreferences?()
+    }
+
+    @objc
+    private func showSupport() {
+        onSupport?()
+    }
+
+    @objc
+    private func emailDeveloper() {
+        onEmailDeveloper?()
     }
 
     @objc

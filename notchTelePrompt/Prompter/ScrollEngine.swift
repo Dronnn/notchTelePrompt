@@ -299,12 +299,16 @@ final class ScrollEngine {
     // MARK: - State predicates
 
     private var isPlaying: Bool {
-        if case .playing = state { return true }
+        if case .playing = state {
+            return true
+        }
         return false
     }
 
     private var isPaused: Bool {
-        if case .paused = state { return true }
+        if case .paused = state {
+            return true
+        }
         return false
     }
 
@@ -332,10 +336,7 @@ final class ScrollEngine {
         }
         ticker = Task { [weak self] in
             while !Task.isCancelled {
-                guard let self else {
-                    return
-                }
-                guard isMoving else {
+                guard let self, isMoving else {
                     return
                 }
                 advance(to: CACurrentMediaTime())

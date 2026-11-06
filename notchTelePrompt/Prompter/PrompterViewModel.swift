@@ -289,7 +289,7 @@ final class PrompterViewModel {
         applyWordsPerMinute(wordsPerMinute - Self.wpmStep)
     }
 
-    private static let wpmStep = 10.0
+    private static let wpmStep = 25.0
 
     private func applyWordsPerMinute(_ wpm: Double) {
         let speed = ScrollSpeed(wordsPerMinute: wpm, fontSize: fontSize, lineSpacing: lineSpacing)

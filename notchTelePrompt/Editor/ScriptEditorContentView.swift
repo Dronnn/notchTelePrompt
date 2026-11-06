@@ -46,13 +46,6 @@ struct ScriptEditorContentView: View {
             }
         }
         .padding()
-        .dropDestination(for: URL.self) { urls, _ in
-            guard let url = urls.first else {
-                return false
-            }
-            Task { await importExportViewModel.handleDroppedFile(url: url, into: viewModel) }
-            return true
-        }
         .toolbar {
             if let script = viewModel.selectedScript {
                 Menu("Export", systemImage: "arrow.up.doc") {

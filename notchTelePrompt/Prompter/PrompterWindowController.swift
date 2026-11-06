@@ -30,6 +30,7 @@ final class PrompterWindowController: NSObject {
     /// forwards the library and preferences toggles to the host, which owns those windows.
     var onToggleLibrary: (() -> Void)?
     var onTogglePreferences: (() -> Void)?
+    var onSupport: (() -> Void)?
 
     var isVisible: Bool {
         panel.isVisible
@@ -61,7 +62,8 @@ final class PrompterWindowController: NSObject {
             onToggleNavigator: { [weak self] in self?.onToggleNavigator?() },
             onToggleControlPanel: { [weak self] in self?.toggleControlPanel() },
             onToggleLibrary: { [weak self] in self?.onToggleLibrary?() },
-            onTogglePreferences: { [weak self] in self?.onTogglePreferences?() }
+            onTogglePreferences: { [weak self] in self?.onTogglePreferences?() },
+            onSupport: { [weak self] in self?.onSupport?() }
         ))
         host.sizingOptions = [.intrinsicContentSize]
         host.translatesAutoresizingMaskIntoConstraints = false
@@ -97,6 +99,7 @@ final class PrompterWindowController: NSObject {
         container.addSubview(chromeHost)
 
         let panel = PrompterPanel(contentView: container)
+        panel.title = String(localized: "Prompter")
         panel.setContentSize(Self.defaultPanelSize)
         // let the user drag the overlay anywhere on its background; never makes the panel key.
         panel.isMovableByWindowBackground = true
@@ -111,6 +114,7 @@ final class PrompterWindowController: NSObject {
         // host the control row above the text body, pinned to the top-right (see installControlsHost);
         // this also raises the panel's minimum width to fit the row.
         installControlsHost(in: container)
+        installWindowHandles(in: container)
 
         // restore the last user-set size so the overlay reopens at its remembered dimensions, clamped to
         // the minimum so no control is clipped; the hosting views track the new size via layout.
@@ -132,9 +136,34 @@ final class PrompterWindowController: NSObject {
 
     // MARK: - Presentation
 
+    private func installWindowHandles(in container: NSView) {
+        let dragHandle = WindowDragHandleView(frame: NSRect(
+            x: (container.bounds.width - 36) / 2, y: 2, width: 36, height: 14
+        ))
+        dragHandle.autoresizingMask = [.minXMargin, .maxXMargin, .maxYMargin]
+        dragHandle.toolTip = String(localized: "Drag to move the prompter")
+        dragHandle.setAccessibilityLabel(String(localized: "Move prompter"))
+        container.addSubview(dragHandle)
+
+        let resizeHandle = WindowResizeHandleView(frame: NSRect(
+            x: container.bounds.width - 22, y: 0, width: 22, height: 22
+        ))
+        resizeHandle.autoresizingMask = [.minXMargin, .maxYMargin]
+        resizeHandle.toolTip = String(localized: "Drag to resize the prompter")
+        resizeHandle.setAccessibilityLabel(String(localized: "Resize prompter"))
+        resizeHandle.onResizeEnd = { [weak self] in
+            guard let self else { return }
+            visibilityStore.setSize(panel.frame.size)
+        }
+        container.addSubview(resizeHandle)
+    }
+
     func show(script: Script) {
         viewModel.currentScript = script
-        snapToNotch()
+        if !isVisible {
+            snapToNotch()
+            AppWindowPlacement.place(panel)
+        }
         // orderFront (never makeKeyAndOrderFront) keeps the panel non-activating and focus-safe.
         panel.orderFront(nil)
         installFontKeyMonitor()
@@ -148,7 +177,7 @@ final class PrompterWindowController: NSObject {
         guard viewModel.currentScript != nil else {
             return
         }
-        snapToNotch()
+        AppWindowPlacement.place(panel)
         panel.orderFront(nil)
         installFontKeyMonitor()
         visibilityStore.setVisible(true)

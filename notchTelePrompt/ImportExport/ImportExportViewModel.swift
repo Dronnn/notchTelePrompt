@@ -93,7 +93,11 @@ final class ImportExportViewModel {
         // balance sandbox access for the panel-vended directory around the write loop. a false return
         // is fine: the panel grants implicit access, so we still attempt and just skip the stop.
         let scoped = directory.startAccessingSecurityScopedResource()
-        defer { if scoped { directory.stopAccessingSecurityScopedResource() } }
+        defer {
+            if scoped {
+                directory.stopAccessingSecurityScopedResource()
+            }
+        }
         do {
             let scripts = try store.fetchAll()
             guard !scripts.isEmpty else {
@@ -118,6 +122,17 @@ final class ImportExportViewModel {
     }
 
     // MARK: - Drag-drop
+
+    /// imports a file dropped anywhere on the main window as a new script, without replacing the
+    /// current editor contents. used by the window-level Finder drop target.
+    func handleDroppedFileAsNewScript(url: URL) async {
+        do {
+            let result = try await service.readFileText(at: url)
+            createAndSelect(title: result.title, text: result.text)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 
     func handleDroppedFile(url: URL, into editorViewModel: ScriptEditorViewModel) async {
         do {
