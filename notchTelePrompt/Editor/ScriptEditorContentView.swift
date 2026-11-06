@@ -48,7 +48,7 @@ struct ScriptEditorContentView: View {
                             return
                         }
                         Task { @MainActor in
-                            await importExportViewModel.handleDroppedFileAsNewScript(url: url)
+                            _ = await importExportViewModel.handleDroppedFileAsNewScript(url: url)
                         }
                     }
                     return true

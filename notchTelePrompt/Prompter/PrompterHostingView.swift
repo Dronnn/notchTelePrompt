@@ -18,4 +18,11 @@ final class PrompterHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
         true
     }
+
+    override func layout() {
+        super.layout()
+        // swiftui may register a new scroll-catcher for file urls when the text is rebuilt.
+        // the overlay container is the drop target, so this host must not keep that registration.
+        PrompterFileDropContainerView.stripFileURLRegistrations(in: self)
+    }
 }

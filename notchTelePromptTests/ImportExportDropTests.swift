@@ -43,9 +43,11 @@ struct ImportExportDropTests {
         let url = try makeTemporaryFile(contents: "Markdown prompt")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
-        await importExport.handleDroppedFileAsNewScript(url: url)
+        let script = await importExport.handleDroppedFileAsNewScript(url: url)
 
         #expect(library.scripts.count == 1)
+        #expect(script?.title == "Markdown prompt")
+        #expect(script?.text == "Markdown prompt")
         #expect(library.selectedScript?.title == "Markdown prompt")
         #expect(library.selectedScript?.text == "Markdown prompt")
     }

@@ -42,11 +42,8 @@ struct SetNavigatorView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .windowDragGesture()
-        // decorative only: letting empty areas fall through to the hosting view keeps the panel
-        // movable by dragging anywhere that is not an interactive row or control.
         .background {
-            Color.black.opacity(0.82).allowsHitTesting(false)
+            Color.black.opacity(0.82)
         }
         .foregroundStyle(.white)
         .clipShape(.rect(cornerRadius: 8))

@@ -32,6 +32,9 @@ final class PrompterWindowController: NSObject {
     var onTogglePreferences: (() -> Void)?
     var onSupport: (() -> Void)?
 
+    /// forwards a finder .txt / .md drop to the host, which imports it and shows it in this overlay.
+    var onDropFileURL: ((URL) -> Void)?
+
     var isVisible: Bool {
         panel.isVisible
     }
@@ -86,7 +89,9 @@ final class PrompterWindowController: NSObject {
 
         // behind a plain container (not a direct content view) the window size is owned only by
         // snap-to-notch and user resizing, never by the SwiftUI content's intrinsic height.
-        let container = NSView(frame: NSRect(origin: .zero, size: Self.defaultPanelSize))
+        // the container is also the finder drop target; it does not become layer-backed, so the
+        // scroll-catcher and the hover controls keep their compositing and mouse handling.
+        let container = PrompterFileDropContainerView(frame: NSRect(origin: .zero, size: Self.defaultPanelSize))
 
         // the text body fills the container.
         let hostingView = Self.makeHostingView(PrompterContentView(viewModel: viewModel), frame: container.bounds)
@@ -108,6 +113,14 @@ final class PrompterWindowController: NSObject {
 
         super.init()
 
+        container.onDropFileURL = { [weak self] url in
+            guard let onDropFileURL = self?.onDropFileURL else {
+                return false
+            }
+            onDropFileURL(url)
+            return true
+        }
+
         // become the panel's delegate so user resizes are persisted via windowDidEndLiveResize.
         panel.delegate = self
 
@@ -115,6 +128,7 @@ final class PrompterWindowController: NSObject {
         // this also raises the panel's minimum width to fit the row.
         installControlsHost(in: container)
         installWindowHandles(in: container)
+        container.stripDescendantFileURLRegistrations()
 
         // restore the last user-set size so the overlay reopens at its remembered dimensions, clamped to
         // the minimum so no control is clipped; the hosting views track the new size via layout.

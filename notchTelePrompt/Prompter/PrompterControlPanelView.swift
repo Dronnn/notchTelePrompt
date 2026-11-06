@@ -80,11 +80,8 @@ struct PrompterControlPanelView: View {
             .padding(8)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .windowDragGesture()
-        // decorative only: empty space falls through to the drag area so the whole panel
-        // can be dragged, while the buttons keep receiving their clicks.
         .background {
-            Color.black.opacity(0.82).allowsHitTesting(false)
+            Color.black.opacity(0.82)
         }
         .clipShape(.rect(cornerRadius: 8))
     }

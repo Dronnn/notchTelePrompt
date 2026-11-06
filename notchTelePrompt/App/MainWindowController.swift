@@ -58,7 +58,7 @@ final class MainWindowController: NSObject, NSWindowDelegate {
             guard let importExportViewModel else {
                 return false
             }
-            Task { await importExportViewModel.handleDroppedFileAsNewScript(url: url) }
+            Task { _ = await importExportViewModel.handleDroppedFileAsNewScript(url: url) }
             return true
         }
         window = NSWindow(

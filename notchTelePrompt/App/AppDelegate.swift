@@ -59,6 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         prompterController?.onToggleLibrary = { [weak self] in self?.mainWindowController?.toggle() }
         prompterController?.onTogglePreferences = { [weak self] in self?.preferences.toggle() }
         prompterController?.onSupport = { [weak self] in self?.support.show() }
+        prompterController?.onDropFileURL = { [weak self] url in self?.importFileIntoPrompter(url) }
 
         let navigator = SetNavigatorWindowController(
             promptSetStore: environment.promptSetStore,
@@ -155,6 +156,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // remember the last shown script so it can be restored on the next launch.
         environment.preferencesStore.lastShownScriptID = script.id
         prompterController?.show(script: script)
+    }
+
+    /// reads a file dropped on the prompter, adds it to the library and shows it there.
+    /// show(script:) resets the scroll position and orders the overlay front, so it stays readable.
+    private func importFileIntoPrompter(_ url: URL) {
+        guard let importExportViewModel else {
+            return
+        }
+        Task {
+            guard let script = await importExportViewModel.handleDroppedFileAsNewScript(url: url) else {
+                return
+            }
+            showPrompter(script)
+        }
     }
 
     /// menu-bar toggle: hide if visible; otherwise resolve and show a script (or open the library).

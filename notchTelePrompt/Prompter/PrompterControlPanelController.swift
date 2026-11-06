@@ -22,6 +22,7 @@ final class PrompterControlPanelController: NSObject {
 
     private let panel: PrompterControlPanel
     private let viewModel: PrompterViewModel
+    private let dragMonitor: PanelDragMonitor
 
     /// forwards the user's request to show or hide the prompter overlay from the control panel.
     var onTogglePrompter: (() -> Void)?
@@ -40,10 +41,12 @@ final class PrompterControlPanelController: NSObject {
         hostingView.sizingOptions = []
         let panel = PrompterControlPanel(contentView: hostingView)
         panel.setContentSize(Self.panelSize)
-        // let the user drag the controls anywhere on their background; never makes the panel key.
+        // the hosting view swallows background clicks; the monitor turns a drag into performDrag
+        // and still forwards plain clicks. never makes the panel key.
         panel.isMovableByWindowBackground = true
         panel.acceptsMouseMovedEvents = true
         self.panel = panel
+        dragMonitor = PanelDragMonitor(panel: panel)
 
         super.init()
 

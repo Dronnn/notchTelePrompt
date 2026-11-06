@@ -123,14 +123,16 @@ final class ImportExportViewModel {
 
     // MARK: - Drag-drop
 
-    /// imports a file dropped anywhere on the main window as a new script, without replacing the
-    /// current editor contents. used by the window-level Finder drop target.
-    func handleDroppedFileAsNewScript(url: URL) async {
+    /// imports a file dropped on the library window or the prompter overlay as a new script, without
+    /// replacing the current editor contents. returns the new script so the caller can show it.
+    @discardableResult
+    func handleDroppedFileAsNewScript(url: URL) async -> Script? {
         do {
             let result = try await service.readFileText(at: url)
-            createAndSelect(title: result.title, text: result.text)
+            return createAndSelect(title: result.title, text: result.text)
         } catch {
             errorMessage = error.localizedDescription
+            return nil
         }
     }
 
@@ -182,13 +184,16 @@ final class ImportExportViewModel {
 
     // MARK: - Helpers
 
-    private func createAndSelect(title: String, text: String) {
+    @discardableResult
+    private func createAndSelect(title: String, text: String) -> Script? {
         do {
             let script = try store.create(title: title, text: text)
             libraryViewModel.refresh()
             libraryViewModel.selectedScript = script
+            return script
         } catch {
             errorMessage = error.localizedDescription
+            return nil
         }
     }
 

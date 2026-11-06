@@ -19,6 +19,7 @@ final class SetNavigatorWindowController: NSObject {
 
     private let panel: SetNavigatorPanel
     private let viewModel: SetNavigatorViewModel
+    private let dragMonitor: PanelDragMonitor
 
     var isVisible: Bool {
         panel.isVisible
@@ -43,10 +44,12 @@ final class SetNavigatorWindowController: NSObject {
         hostingView.sizingOptions = []
         let panel = SetNavigatorPanel(contentView: hostingView)
         panel.setContentSize(Self.defaultPanelSize)
-        // let the user drag the navigator anywhere on its background; never makes the panel key.
+        // the hosting view swallows background clicks; the monitor turns a drag into performDrag
+        // and still forwards plain clicks. never makes the panel key.
         panel.isMovableByWindowBackground = true
         panel.acceptsMouseMovedEvents = true
         self.panel = panel
+        dragMonitor = PanelDragMonitor(panel: panel)
 
         super.init()
 
