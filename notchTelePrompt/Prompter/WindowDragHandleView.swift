@@ -39,18 +39,18 @@ struct WindowDragHandle: NSViewRepresentable {
     func updateNSView(_: WindowDragHandleView, context _: Context) {}
 }
 
-/// a transparent hit-testing layer placed behind panel content. dragging empty areas moves the
-/// hosting window, while interactive rows and buttons above it keep receiving their own clicks.
-struct WindowDragArea: View {
+/// moves the hosting window while the user drags. attaching this to a panel's root view lets the
+/// user grab any area that doesn't have its own drag gesture; child gestures such as list reordering
+/// keep priority, and clicks still reach buttons because the drag needs a few points of movement.
+private struct WindowDragGestureModifier: ViewModifier {
     @State private var window: NSWindow?
     @State private var initialOrigin: NSPoint?
 
-    var body: some View {
-        Color.clear
-            .contentShape(Rectangle())
-            .background(WindowAccessor { window = $0 })
+    func body(content: Content) -> some View {
+        content
+            .background(WindowReader { window = $0 })
             .gesture(
-                DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                DragGesture(minimumDistance: 2, coordinateSpace: .global)
                     .onChanged { value in
                         guard let window else { return }
                         if initialOrigin == nil {
@@ -68,27 +68,35 @@ struct WindowDragArea: View {
     }
 }
 
-/// exposes the hosting window to SwiftUI without changing the view hierarchy.
-private struct WindowAccessor: NSViewRepresentable {
+extension View {
+    func windowDragGesture() -> some View {
+        modifier(WindowDragGestureModifier())
+    }
+}
+
+/// reports the hosting window once the view is attached to it.
+private struct WindowReader: NSViewRepresentable {
     let onWindow: (NSWindow?) -> Void
 
-    func makeNSView(context _: Context) -> WindowAccessorView {
-        let view = WindowAccessorView()
+    func makeNSView(context _: Context) -> WindowReaderView {
+        let view = WindowReaderView()
         view.onWindow = onWindow
         return view
     }
 
-    func updateNSView(_ nsView: WindowAccessorView, context _: Context) {
+    func updateNSView(_ nsView: WindowReaderView, context _: Context) {
         nsView.onWindow = onWindow
-        onWindow(nsView.window)
     }
 }
 
-private final class WindowAccessorView: NSView {
+private final class WindowReaderView: NSView {
     var onWindow: ((NSWindow?) -> Void)?
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        onWindow?(window)
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            onWindow?(window)
+        }
     }
 }

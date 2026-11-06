@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// the editing surface shown when a script is selected: title field, body editor, live stats and the prompter toolbar
 /// action.
@@ -33,6 +34,25 @@ struct ScriptEditorContentView: View {
                             .allowsHitTesting(false)
                     }
                 }
+                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                    guard let provider = providers.first else {
+                        return false
+                    }
+                    // the text view is AppKit-backed and may not participate in SwiftUI's
+                    // transferable drop path, so load the file URL explicitly.
+                    provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
+                        guard
+                            let data = item as? Data,
+                            let url = URL(dataRepresentation: data, relativeTo: nil)
+                        else {
+                            return
+                        }
+                        Task { @MainActor in
+                            await importExportViewModel.handleDroppedFileAsNewScript(url: url)
+                        }
+                    }
+                    return true
+                }
 
             Divider()
 
@@ -46,6 +66,9 @@ struct ScriptEditorContentView: View {
             }
         }
         .padding()
+        .onAppear {
+            NotificationCenter.default.post(name: .scriptEditorDidAppear, object: nil)
+        }
         .toolbar {
             if let script = viewModel.selectedScript {
                 Menu("Export", systemImage: "arrow.up.doc") {

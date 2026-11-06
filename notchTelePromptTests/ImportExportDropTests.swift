@@ -36,6 +36,21 @@ struct ImportExportDropTests {
     }
 
     @Test
+    func droppingFileAsNewScriptOpensItForEditing() async throws {
+        let store = try makeStore()
+        let library = LibraryViewModel(store: store)
+        let importExport = ImportExportViewModel(store: store, libraryViewModel: library)
+        let url = try makeTemporaryFile(contents: "Markdown prompt")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+
+        await importExport.handleDroppedFileAsNewScript(url: url)
+
+        #expect(library.scripts.count == 1)
+        #expect(library.selectedScript?.title == "Markdown prompt")
+        #expect(library.selectedScript?.text == "Markdown prompt")
+    }
+
+    @Test
     func droppingFileOntoEditedScriptAsksBeforeReplacing() async throws {
         let store = try makeStore()
         let script = try store.create(title: "Current", text: "Existing text")

@@ -13,6 +13,7 @@ import SwiftUI
 struct PrompterControlPanelView: View {
     let viewModel: PrompterViewModel
     let onTogglePrompter: () -> Void
+    let onClose: () -> Void
 
     private var isPlaying: Bool {
         viewModel.scrollEngine.state == .playing
@@ -30,57 +31,61 @@ struct PrompterControlPanelView: View {
     }
 
     var body: some View {
-        HStack {
-            WindowDragHandle()
-                .frame(width: 18, height: 18)
-                .accessibilityLabel("Move mini controls")
-            Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
-                viewModel.playPause()
+        ZStack {
+            HStack {
+                Button("Close", systemImage: "xmark", action: onClose)
+                    .help("Close")
+                WindowDragHandle()
+                    .frame(width: 18, height: 18)
+                    .accessibilityLabel("Move mini controls")
+                Button(isPlaying ? "Pause" : "Play", systemImage: isPlaying ? "pause.fill" : "play.fill") {
+                    viewModel.playPause()
+                }
+                .disabled(!hasScript)
+                Button("Restart", systemImage: "arrow.counterclockwise") {
+                    viewModel.restart()
+                }
+                .disabled(!hasScript)
+                Button("Slower", systemImage: "tortoise") {
+                    viewModel.decreaseSpeed()
+                }
+                .disabled(!hasScript)
+                Button("Faster", systemImage: "hare") {
+                    viewModel.increaseSpeed()
+                }
+                .disabled(!hasScript)
+                Button("Smaller text", systemImage: "textformat.size.smaller") {
+                    viewModel.decreaseFontSize()
+                }
+                .disabled(!viewModel.canDecreaseFontSize)
+                Button("Larger text", systemImage: "textformat.size.larger") {
+                    viewModel.increaseFontSize()
+                }
+                .disabled(!viewModel.canIncreaseFontSize)
+                Button(
+                    viewModel.isVoiceModeEnabled ? "Voice on" : "Voice off",
+                    systemImage: voiceSymbol
+                ) {
+                    viewModel.toggleVoiceMode()
+                }
+                Button(
+                    viewModel.isOverlayVisible ? "Hide Prompter" : "Show Prompter",
+                    systemImage: viewModel.isOverlayVisible ? "eye.slash" : "eye",
+                    action: onTogglePrompter
+                )
             }
-            .disabled(!hasScript)
-            Button("Restart", systemImage: "arrow.counterclockwise") {
-                viewModel.restart()
-            }
-            .disabled(!hasScript)
-            Button("Slower", systemImage: "tortoise") {
-                viewModel.decreaseSpeed()
-            }
-            .disabled(!hasScript)
-            Button("Faster", systemImage: "hare") {
-                viewModel.increaseSpeed()
-            }
-            .disabled(!hasScript)
-            Button("Smaller text", systemImage: "textformat.size.smaller") {
-                viewModel.decreaseFontSize()
-            }
-            .disabled(!viewModel.canDecreaseFontSize)
-            Button("Larger text", systemImage: "textformat.size.larger") {
-                viewModel.increaseFontSize()
-            }
-            .disabled(!viewModel.canIncreaseFontSize)
-            Button(
-                viewModel.isVoiceModeEnabled ? "Voice on" : "Voice off",
-                systemImage: voiceSymbol
-            ) {
-                viewModel.toggleVoiceMode()
-            }
-            Button(
-                viewModel.isOverlayVisible ? "Hide Prompter" : "Show Prompter",
-                systemImage: viewModel.isOverlayVisible ? "eye.slash" : "eye",
-                action: onTogglePrompter
-            )
+            .labelStyle(.iconOnly)
+            .buttonStyle(.plain)
+            .foregroundStyle(.white.opacity(0.85))
+            .padding(8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .labelStyle(.iconOnly)
-        .buttonStyle(.plain)
-        .foregroundStyle(.white.opacity(0.85))
-        .padding(8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // decorative only: empty space falls through to the hosting view so the whole panel
+        .windowDragGesture()
+        // decorative only: empty space falls through to the drag area so the whole panel
         // can be dragged, while the buttons keep receiving their clicks.
         .background {
             Color.black.opacity(0.82).allowsHitTesting(false)
         }
-        .background(WindowDragArea())
         .clipShape(.rect(cornerRadius: 8))
     }
 }

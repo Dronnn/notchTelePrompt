@@ -78,6 +78,12 @@ final class MainWindowController: NSObject, NSWindowDelegate {
 
         super.init()
         window.delegate = self
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(scriptEditorDidAppear),
+            name: .scriptEditorDidAppear,
+            object: nil
+        )
 
         forwardStart = { [weak self] script in self?.onStartPrompter?(script) }
         forwardSupport = { [weak self] in self?.onSupport?() }
@@ -106,6 +112,14 @@ final class MainWindowController: NSObject, NSWindowDelegate {
         removeTextEditorFileDropTargets()
     }
 
+    @objc
+    private func scriptEditorDidAppear() {
+        // the editor's NSTextView is created after the SwiftUI view appears; reapply on the next turn.
+        DispatchQueue.main.async { [weak self] in
+            self?.removeTextEditorFileDropTargets()
+        }
+    }
+
     /// lets the editor keep normal text drags but not swallow Finder file drops, which belong to the
     /// window-level drop target.
     private func removeTextEditorFileDropTargets() {
@@ -128,6 +142,10 @@ final class MainWindowController: NSObject, NSWindowDelegate {
 
     func windowDidResignKey(_: Notification) {
         window.level = .normal
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     /// flips the library/editor window between shown and hidden; used by the prompter's library toggle.

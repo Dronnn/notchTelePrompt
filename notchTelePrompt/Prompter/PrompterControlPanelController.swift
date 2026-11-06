@@ -15,7 +15,7 @@ import SwiftUI
 @MainActor
 final class PrompterControlPanelController: NSObject {
     /// the control row's fixed size; wide enough for the eight icon buttons in a single line.
-    private static let panelSize = CGSize(width: 400, height: 48)
+    private static let panelSize = CGSize(width: 440, height: 48)
 
     /// gap between the panel's bottom edge and the visible frame's bottom edge.
     private static let bottomMargin: CGFloat = 24
@@ -33,7 +33,9 @@ final class PrompterControlPanelController: NSObject {
     init(viewModel: PrompterViewModel) {
         self.viewModel = viewModel
 
-        let hostingView = PrompterHostingView(rootView: PrompterControlPanelView(viewModel: viewModel) {})
+        let hostingView = PrompterHostingView(
+            rootView: PrompterControlPanelView(viewModel: viewModel, onTogglePrompter: {}, onClose: {})
+        )
         // don't let SwiftUI's intrinsic sizing drive the window's content size; the fixed panel size governs.
         hostingView.sizingOptions = []
         let panel = PrompterControlPanel(contentView: hostingView)
@@ -46,9 +48,11 @@ final class PrompterControlPanelController: NSObject {
         super.init()
 
         // rebuild the content with the toggle action wired now that self is fully initialized.
-        hostingView.rootView = PrompterControlPanelView(viewModel: viewModel) { [weak self] in
-            self?.onTogglePrompter?()
-        }
+        hostingView.rootView = PrompterControlPanelView(
+            viewModel: viewModel,
+            onTogglePrompter: { [weak self] in self?.onTogglePrompter?() },
+            onClose: { [weak self] in self?.hide() }
+        )
 
         observeScreenChanges()
     }
