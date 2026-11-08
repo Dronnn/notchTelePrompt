@@ -82,8 +82,10 @@ struct TipJarTests {
     @Test
     func unfinishedVerifiedTipIsAcknowledgedAndFinished() async throws {
         try await withSession { session in
-            let transaction = try await session.buyProduct(identifier: TipStore.productIDs[0])
+            // the app host has its own TipStore, so listen before the purchase instead of relying on
+            // a backlog the host may already have finished
             let store = TipStore()
+            let transaction = try await session.buyProduct(identifier: TipStore.productIDs[0])
 
             #expect(await eventually { store.feedback == .thankYou })
             #expect(await eventually {
@@ -143,9 +145,12 @@ struct TipJarTests {
 
     private func withSession(_ body: (SKTestSession) async throws -> Void) async throws {
         let session = try SKTestSession(contentsOf: Self.configurationURL)
-        session.disableDialogs = true
         session.resetToDefaultState()
         session.clearTransactions()
+        // pin the fixture's US storefront so prices aren't converted to the host's App Store region
+        session.storefront = "USA"
+        session.locale = Locale(identifier: "en_US")
+        session.disableDialogs = true
         do {
             try await body(session)
         } catch {

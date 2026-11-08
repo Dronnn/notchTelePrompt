@@ -33,12 +33,15 @@ final class TipStore {
     @ObservationIgnored private var handledTransactionIDs: Set<UInt64> = []
 
     init() {
+        // subscribe before scanning unfinished so a transaction arriving during launch is not missed
         observerTask = Task { [weak self] in
-            await self?.processUnfinishedTransactions()
             for await result in Transaction.updates {
                 guard !Task.isCancelled else { break }
                 await self?.process(result)
             }
+        }
+        Task { [weak self] in
+            await self?.processUnfinishedTransactions()
         }
     }
 
