@@ -83,27 +83,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Launch Preferences
 
-    /// applies the startup preferences: Dock visibility, then optionally the editor and the last prompter.
+    /// applies the startup preferences: Dock visibility, the demo script on a fresh install,
+    /// then the editor and the prompter. the prompter always opens on launch.
     private func applyLaunchPreferences() {
         let prefs = environment.preferencesStore
         DockIconPolicy.apply(showDockIcon: prefs.showDockIcon)
+        seedDemoScriptIfNeeded()
+        libraryViewModel?.refresh()
+        showInitialPrompter()
         if prefs.openEditorOnLaunch {
             mainWindowController?.open()
         }
-        if prefs.restoreLastScript {
-            restoreLastShownScript()
-        }
     }
 
-    /// shows the last-remembered script in the prompter, unless one is already showing.
-    /// a missing or unknown id is ignored silently.
-    private func restoreLastShownScript() {
-        guard prompterController?.isVisible == false, let id = environment.preferencesStore.lastShownScriptID else {
+    /// adds a short demo script on the first launch of a fresh install, so the prompter has
+    /// something to show right away. never runs again and never touches an existing library.
+    private func seedDemoScriptIfNeeded() {
+        let key = "hasSeededDemoScript"
+        guard !UserDefaults.standard.bool(forKey: key) else {
             return
         }
-        // try? on an optional-returning fetch yields Script??; flatten so a missing id is just nil.
-        let script = (try? environment.scriptStore.script(withID: id)).flatMap(\.self)
+        UserDefaults.standard.set(true, forKey: key)
+        guard (try? environment.scriptStore.fetchAll())?.isEmpty == true else {
+            return
+        }
+        let text = """
+        Welcome to NotchPrompter
+
+        Your script appears here, right next to the MacBook camera, so you can read while keeping eye contact with the lens.
+
+        Paste your own script into the editor, or import a .txt or .md file. Press Start Prompter when you are ready.
+
+        Use the controls in the top-right corner to play, adjust the speed and text size, or turn on voice follow.
+
+        This demo script is yours to edit or delete.
+        """
+        guard let demo = try? environment.scriptStore.create(title: "Welcome to NotchPrompter", text: text) else {
+            return
+        }
+        environment.preferencesStore.lastShownScriptID = demo.id
+    }
+
+    /// shows the prompter on launch. prefers the last shown script, then the library selection,
+    /// then the most recent script, then any script. opens the library only when nothing exists.
+    private func showInitialPrompter() {
+        guard prompterController?.isVisible == false else {
+            return
+        }
+        var script: Script?
+        if environment.preferencesStore.restoreLastScript, let id = environment.preferencesStore.lastShownScriptID {
+            // try? on an optional-returning fetch yields Script??; flatten so a missing id is just nil.
+            script = (try? environment.scriptStore.script(withID: id)).flatMap(\.self)
+        }
+        script = script ?? libraryViewModel?.selectedScript
+        script = script ?? environment.scriptStore.mostRecentScript
+        script = script ?? (try? environment.scriptStore.fetchAll())?.first
         guard let script else {
+            mainWindowController?.open()
             return
         }
         showPrompter(script)
@@ -157,6 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // markUsed is best-effort recency bookkeeping; failing it must not block starting the prompter.
         try? environment.scriptStore.markUsed(script)
         libraryViewModel?.refresh()
+        libraryViewModel?.selectedScript = script
         // remember the last shown script so it can be restored on the next launch.
         environment.preferencesStore.lastShownScriptID = script.id
         prompterController?.show(script: script)

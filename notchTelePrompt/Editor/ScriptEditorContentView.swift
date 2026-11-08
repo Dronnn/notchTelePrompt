@@ -62,6 +62,19 @@ struct ScriptEditorContentView: View {
                     charCount: viewModel.charCount,
                     readingTime: viewModel.readingTime
                 )
+                Button("Start Prompter", systemImage: "play.fill") {
+                    if let script = viewModel.selectedScript {
+                        // flush the debounced autosave so the prompter starts with the current edited text.
+                        viewModel.saveImmediately()
+                        onStartPrompter?(script)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(
+                    viewModel.selectedScript == nil
+                        || viewModel.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                )
+                .keyboardShortcut("r", modifiers: .command)
                 FontSizeControlView(viewModel: viewModel)
             }
         }
@@ -80,19 +93,6 @@ struct ScriptEditorContentView: View {
                     }
                 }
             }
-
-            Button("Start Prompter", systemImage: "play.fill") {
-                if let script = viewModel.selectedScript {
-                    // flush the debounced autosave so the prompter starts with the current edited text.
-                    viewModel.saveImmediately()
-                    onStartPrompter?(script)
-                }
-            }
-            .disabled(
-                viewModel.selectedScript == nil
-                    || viewModel.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            )
-            .keyboardShortcut("r", modifiers: .command)
         }
     }
 }

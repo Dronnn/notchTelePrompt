@@ -211,7 +211,6 @@ final class PrompterWindowController: NSObject {
         viewModel.currentScript = script
         if !isVisible {
             snapToNotch()
-            AppWindowPlacement.place(panel)
         }
         // orderFront (never makeKeyAndOrderFront) keeps the panel non-activating and focus-safe.
         panel.orderFront(nil)
@@ -226,7 +225,6 @@ final class PrompterWindowController: NSObject {
         guard viewModel.currentScript != nil else {
             return
         }
-        AppWindowPlacement.place(panel)
         panel.orderFront(nil)
         installFontKeyMonitor()
         visibilityStore.setVisible(true)

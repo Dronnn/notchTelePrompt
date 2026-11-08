@@ -17,28 +17,36 @@ struct SetsSidebarView: View {
     @State private var renameText = ""
 
     var body: some View {
-        List(selection: $viewModel.selectedSet) {
-            Section("All Sets") {
-                ForEach(viewModel.sets) { set in
-                    SetRowContainerView(set: set, viewModel: viewModel, onRename: startRename)
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button("New Set", systemImage: "plus") {
+                    do {
+                        try viewModel.createSet()
+                    } catch {
+                        viewModel.errorMessage = error.localizedDescription
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
+            List(selection: $viewModel.selectedSet) {
+                Section("All Sets") {
+                    ForEach(viewModel.sets) { set in
+                        SetRowContainerView(set: set, viewModel: viewModel, onRename: startRename)
+                    }
                 }
             }
-        }
-        .overlay {
-            if viewModel.sets.isEmpty {
-                ContentUnavailableView(
-                    "No Sets",
-                    systemImage: "rectangle.stack",
-                    description: Text("Create a set to group prompts for a session.")
-                )
-            }
-        }
-        .toolbar {
-            Button("New Set", systemImage: "plus") {
-                do {
-                    try viewModel.createSet()
-                } catch {
-                    viewModel.errorMessage = error.localizedDescription
+            .overlay {
+                if viewModel.sets.isEmpty {
+                    ContentUnavailableView(
+                        "No Sets",
+                        systemImage: "rectangle.stack",
+                        description: Text("Create a set to group prompts for a session.")
+                    )
                 }
             }
         }

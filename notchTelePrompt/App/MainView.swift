@@ -94,6 +94,12 @@ struct MainView: View {
                 setsViewModel.refreshSets()
             }
         }
+        .onAppear {
+            // the launch prompter may have selected a script before this window was first shown.
+            if editorViewModel.selectedScript == nil {
+                editorViewModel.selectedScript = libraryViewModel.selectedScript
+            }
+        }
         .modelContainer(modelContainer)
         .environment(\.locale, preferencesStore.appLanguage.locale)
         .sheet(isPresented: .init(get: { !hasSeenWelcome }, set: { _ in })) {
